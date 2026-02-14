@@ -1,0 +1,17 @@
+<Solution>
+  <Folder Name="/.github/" />
+  <Folder Name="/.github/workflows/" />
+  <Folder Name="/.solution-items/">
+    <File Path=".gitignore" />
+    <File Path="LICENSE" />
+    <File Path="README.md" />
+  </Folder>
+  <Folder Name="/src/">
+    <File Path="src/Directory.Build.props" />
+    <File Path="src/Directory.Packages.props" />
+    <Project Path="src/Arcanic.Result/Arcanic.Result.csproj" Id="37bbc6ce-f600-4b53-9670-9a6e2eaa0124" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Arcanic.Result.Tests/Arcanic.Result.Tests.csproj" Id="492b6be6-2759-4aca-90f9-fc31493a9108" />
+  </Folder>
+</Solution>
