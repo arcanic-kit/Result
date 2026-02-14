@@ -1,6 +1,6 @@
 # Arcanic.Result
 
-A robust Result pattern implementation for .NET applications inspired by functional programming principles and Milan Jovanovic's approach to error handling.
+A robust Result pattern implementation for .NET applications inspired by functional programming principles and to error handling.
 
 ## Features
 
