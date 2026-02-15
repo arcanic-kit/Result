@@ -1,6 +1,6 @@
 # Arcanic.Result
 
-A robust Result pattern implementation for .NET applications inspired by functional programming principles and functional error handling.
+A lightweight Result pattern implementation for .NET that provides explicit error handling and type-safe operations without exceptions.
 
 ## Features
 
@@ -260,13 +260,6 @@ public class UsersController : ControllerBase
 4. **Performance** - No exception throwing for business logic failures
 5. **Testability** - Easy to test both success and failure paths
 6. **Readability** - Clear separation between success and failure flows using Match method
-
-## Inspiration
-
-This library is inspired by:
-- Milan Jovanovic's approach to Result patterns in .NET
-- Functional programming principles from F# and other functional languages
-- Railway-oriented programming concepts
 
 ## License
 
