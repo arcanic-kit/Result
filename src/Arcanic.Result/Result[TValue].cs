@@ -29,47 +29,6 @@ public class Result<TValue> : Result
         : throw new InvalidOperationException("The value of a failure result can not be accessed.");
 
     /// <summary>
-    /// Executes the action if the result is successful.
-    /// </summary>
-    /// <param name="action">The action to execute with the value.</param>
-    /// <returns>The current result.</returns>
-    public Result<TValue> Tap(Action<TValue> action)
-    {
-        if (IsSuccess)
-        {
-            action(Value);
-        }
-
-        return this;
-    }
-
-    /// <summary>
-    /// Executes the function if the result is successful and returns a new result.
-    /// </summary>
-    /// <param name="func">The function to execute with the value.</param>
-    /// <returns>The result of the function if successful, otherwise the current result.</returns>
-    public Result Bind(Func<TValue, Result> func) =>
-        IsSuccess ? func(Value) : Failure(Error);
-
-    /// <summary>
-    /// Executes the function if the result is successful and returns a new result.
-    /// </summary>
-    /// <typeparam name="TOut">The output type.</typeparam>
-    /// <param name="func">The function to execute with the value.</param>
-    /// <returns>The result of the function if successful, otherwise a failed result.</returns>
-    public Result<TOut> Bind<TOut>(Func<TValue, Result<TOut>> func) =>
-        IsSuccess ? func(Value) : Failure<TOut>(Error);
-
-    /// <summary>
-    /// Transforms the value using the specified function if successful.
-    /// </summary>
-    /// <typeparam name="TOut">The output type.</typeparam>
-    /// <param name="func">The function to apply to the value.</param>
-    /// <returns>The transformed result if successful, otherwise a failed result.</returns>
-    public Result<TOut> Map<TOut>(Func<TValue, TOut> func) =>
-        IsSuccess ? Success(func(Value)) : Failure<TOut>(Error);
-
-    /// <summary>
     /// Matches the result and executes the appropriate function.
     /// </summary>
     /// <typeparam name="TOut">The output type.</typeparam>

@@ -1,14 +1,12 @@
 # Arcanic.Result
 
-A robust Result pattern implementation for .NET applications inspired by functional programming principles and to error handling.
+A robust Result pattern implementation for .NET applications inspired by functional programming principles and functional error handling.
 
 ## Features
 
 - **Type-safe error handling** - No more exceptions for business logic failures
-- **Railway-oriented programming** - Chain operations with automatic error propagation
 - **Rich error types** - Support for different error categories (Validation, NotFound, Conflict, Failure)
-- **Async support** - Full async/await compatibility
-- **Fluent API** - Expressive and readable code
+- **Pattern matching** - Comprehensive Match methods for handling success and failure cases
 - **Implicit conversions** - Seamless integration with existing code
 
 ## Installation
@@ -48,16 +46,20 @@ var conflictError = Error.Conflict("EMAIL_EXISTS", "User with this email already
 var failureError = Error.Failure("DATABASE_ERROR", "Failed to connect to database");
 ```
 
-### Chaining Operations (Railway Pattern)
+### Basic Result Operations
 
 ```csharp
-public async Task<Result<UserDto>> GetUserAsync(int userId)
+public Result<UserDto> GetUser(int userId)
 {
-    return await Result.Success(userId)
-        .Bind(ValidateUserId)
-        .BindAsync(GetUserFromDatabaseAsync)
-        .MapAsync(MapToUserDto)
-        .Ensure(user => user.IsActive, Error.Validation("USER_INACTIVE", "User is not active"));
+    var userResult = ValidateUserId(userId);
+
+    return userResult.Match(
+        onSuccess: id => GetUserFromDatabase(id).Match(
+            onSuccess: user => Result.Success(MapToUserDto(user)),
+            onFailure: error => Result.Failure<UserDto>(error)
+        ),
+        onFailure: error => Result.Failure<UserDto>(error)
+    );
 }
 
 private Result<int> ValidateUserId(int userId)
@@ -67,15 +69,15 @@ private Result<int> ValidateUserId(int userId)
         : Result.Failure<int>(Error.Validation("INVALID_ID", "User ID must be positive"));
 }
 
-private async Task<Result<User>> GetUserFromDatabaseAsync(int userId)
+private Result<User> GetUserFromDatabase(int userId)
 {
-    var user = await _repository.GetByIdAsync(userId);
+    var user = _repository.GetById(userId);
     return user is not null 
         ? Result.Success(user)
         : Result.Failure<User>(Error.NotFound("USER_NOT_FOUND", "User not found"));
 }
 
-private async Task<UserDto> MapToUserDto(User user)
+private UserDto MapToUserDto(User user)
 {
     return new UserDto 
     { 
@@ -89,9 +91,9 @@ private async Task<UserDto> MapToUserDto(User user)
 ### Error Handling with Match
 
 ```csharp
-var result = await GetUserAsync(userId);
+var result = GetUser(userId);
 
-// Pattern matching
+// Pattern matching for return values
 var response = result.Match(
     onSuccess: user => Ok(user),
     onFailure: error => error.Type switch
@@ -102,7 +104,7 @@ var response = result.Match(
     }
 );
 
-// Action-based matching
+// Action-based matching for side effects
 result.Match(
     onSuccess: user => Console.WriteLine($"User: {user.Name}"),
     onFailure: error => Console.WriteLine($"Error: {error.Description}")
@@ -112,37 +114,28 @@ result.Match(
 ### Exception Handling
 
 ```csharp
-// Wrap potentially throwing operations
-var result = ResultExtensions.Try(() => JsonSerializer.Deserialize<User>(json));
-
-// Async version
-var asyncResult = await ResultExtensions.TryAsync(async () => 
-    await httpClient.GetStringAsync("https://api.example.com/users"));
-```
-
-### Combining Multiple Results
-
-```csharp
-var validation1 = ValidateEmail(email);
-var validation2 = ValidatePassword(password);
-var validation3 = ValidateAge(age);
-
-var combinedResult = ResultExtensions.Combine(validation1, validation2, validation3);
-
-if (combinedResult.IsSuccess)
+// Handle exceptions manually in your methods
+private Result<User> ParseUserFromJson(string json)
 {
-    // All validations passed
-    await CreateUserAsync(email, password, age);
+    try
+    {
+        var user = JsonSerializer.Deserialize<User>(json);
+        return user is not null 
+            ? Result.Success(user)
+            : Result.Failure<User>(Error.Failure("PARSE_ERROR", "Failed to parse user from JSON"));
+    }
+    catch (Exception ex)
+    {
+        return Result.Failure<User>(Error.Failure("JSON_ERROR", ex.Message));
+    }
 }
-```
 
-### Extension Methods
-
-```csharp
-var result = await GetUserAsync(userId)
-    .Ensure(user => user.IsActive, Error.Validation("INACTIVE", "User is inactive"))
-    .Ensure(user => user.IsVerified, Error.Validation("UNVERIFIED", "User is not verified"))
-    .MapAsync(async user => await EnrichUserDataAsync(user));
+// Using the result
+var parseResult = ParseUserFromJson(jsonString);
+parseResult.Match(
+    onSuccess: user => ProcessUser(user),
+    onFailure: error => LogError(error)
+);
 ```
 
 ## Advanced Examples
@@ -155,12 +148,24 @@ public class UserService
     private readonly IUserRepository _repository;
     private readonly IEmailService _emailService;
 
-    public async Task<Result<User>> CreateUserAsync(CreateUserRequest request)
+    public Result<User> CreateUser(CreateUserRequest request)
     {
-        return await ValidateRequest(request)
-            .BindAsync(async _ => await CheckEmailNotExists(request.Email))
-            .BindAsync(async _ => await CreateUser(request))
-            .TapAsync(async user => await _emailService.SendWelcomeEmailAsync(user.Email));
+        var validationResult = ValidateRequest(request);
+
+        return validationResult.Match(
+            onSuccess: validRequest => CheckEmailNotExists(validRequest.Email).Match(
+                onSuccess: _ => CreateUserInternal(validRequest).Match(
+                    onSuccess: user => 
+                    {
+                        _emailService.SendWelcomeEmail(user.Email);
+                        return Result.Success(user);
+                    },
+                    onFailure: error => Result.Failure<User>(error)
+                ),
+                onFailure: error => Result.Failure<User>(error)
+            ),
+            onFailure: error => Result.Failure<User>(error)
+        );
     }
 
     private Result<CreateUserRequest> ValidateRequest(CreateUserRequest request)
@@ -174,15 +179,15 @@ public class UserService
         return Result.Success(request);
     }
 
-    private async Task<Result> CheckEmailNotExists(string email)
+    private Result CheckEmailNotExists(string email)
     {
-        var existingUser = await _repository.GetByEmailAsync(email);
+        var existingUser = _repository.GetByEmail(email);
         return existingUser is null
             ? Result.Success()
             : Result.Failure(Error.Conflict("EMAIL_EXISTS", "User with this email already exists"));
     }
 
-    private async Task<Result<User>> CreateUser(CreateUserRequest request)
+    private Result<User> CreateUserInternal(CreateUserRequest request)
     {
         try
         {
@@ -193,7 +198,7 @@ public class UserService
                 CreatedAt = DateTime.UtcNow
             };
 
-            await _repository.AddAsync(user);
+            _repository.Add(user);
             return Result.Success(user);
         }
         catch (Exception ex)
@@ -214,9 +219,9 @@ public class UsersController : ControllerBase
     private readonly IUserService _userService;
 
     [HttpGet("{id}")]
-    public async Task<IActionResult> GetUser(int id)
+    public IActionResult GetUser(int id)
     {
-        var result = await _userService.GetUserAsync(id);
+        var result = _userService.GetUser(id);
 
         return result.Match(
             onSuccess: user => Ok(user),
@@ -230,9 +235,9 @@ public class UsersController : ControllerBase
     }
 
     [HttpPost]
-    public async Task<IActionResult> CreateUser(CreateUserRequest request)
+    public IActionResult CreateUser(CreateUserRequest request)
     {
-        var result = await _userService.CreateUserAsync(request);
+        var result = _userService.CreateUser(request);
 
         return result.Match(
             onSuccess: user => CreatedAtAction(nameof(GetUser), new { id = user.Id }, user),
@@ -250,11 +255,11 @@ public class UsersController : ControllerBase
 ## Benefits
 
 1. **Explicit Error Handling** - All failure cases are explicit in the method signature
-2. **Composability** - Chain operations without nested try-catch blocks
+2. **Pattern Matching** - Handle success and failure cases with functional style pattern matching
 3. **Type Safety** - Compile-time guarantees about error handling
 4. **Performance** - No exception throwing for business logic failures
 5. **Testability** - Easy to test both success and failure paths
-6. **Readability** - Clear separation between success and failure flows
+6. **Readability** - Clear separation between success and failure flows using Match method
 
 ## Inspiration
 
