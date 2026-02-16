@@ -1,4 +1,4 @@
-# Arcanic.Result
+# Arcanic Result
 
 A lightweight Result pattern implementation for .NET that provides explicit error handling and type-safe operations without exceptions.
 
