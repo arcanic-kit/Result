@@ -1,0 +1,187 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'  # Trigger on version tags like v1.0.0
+  workflow_dispatch:  # Allow manual triggering
+    inputs:
+      version:
+        description: 'Version to deploy (e.g., 1.0.0)'
+        required: true
+        type: string
+
+env:
+  DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true
+  DOTNET_NOLOGO: true
+  DOTNET_CLI_TELEMETRY_OPTOUT: true
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0  # Fetch full history for GitVersion
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: |
+          8.0.x
+          9.0.x
+          10.0.x
+
+    - name: Determine version
+      id: version
+      run: |
+        if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+          VERSION="${{ github.event.inputs.version }}"
+        else
+          # Extract version from tag (remove 'v' prefix)
+          VERSION="${GITHUB_REF#refs/tags/v}"
+        fi
+        echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+        echo "Package version: $VERSION"
+
+    - name: Restore dependencies
+      run: dotnet restore Arcanic.Result.slnx
+
+    - name: Build solution
+      run: |
+        dotnet build Arcanic.Result.slnx \
+          --configuration Release \
+          --no-restore \
+          -p:Version=${{ steps.version.outputs.VERSION }} \
+          -p:AssemblyVersion=${{ steps.version.outputs.VERSION }}.0 \
+          -p:FileVersion=${{ steps.version.outputs.VERSION }}.0 \
+          -p:DebugType=portable \
+          -p:DebugSymbols=true
+
+    - name: Run tests
+      run: |
+        dotnet test Arcanic.Result.slnx \
+          --configuration Release \
+          --no-build \
+          --verbosity normal \
+          --collect:"XPlat Code Coverage" \
+          --results-directory ./coverage
+
+    - name: Clean packages directory
+      run: |
+        rm -rf ./packages
+        mkdir -p ./packages
+
+    - name: Create packages 
+      run: |
+        # Pack only the src projects, excluding samples and test projects
+        for project in src/*/*.csproj; do
+          if [ -f "$project" ]; then
+            # Skip if project path contains "sample" or "test" (case insensitive)
+            if [[ ! "$project" =~ [Ss]ample ]] && [[ ! "$project" =~ [Tt]est ]]; then
+              echo "Packing: $project"
+              dotnet pack "$project" \
+                --configuration Release \
+                --no-build \
+                --output ./packages \
+                -p:Version=${{ steps.version.outputs.VERSION }} \
+                -p:AssemblyVersion=${{ steps.version.outputs.VERSION }}.0 \
+                -p:FileVersion=${{ steps.version.outputs.VERSION }}.0 \
+                -p:IncludeSymbols=true \
+                -p:SymbolPackageFormat=snupkg \
+                -p:DebugType=portable \
+                -p:DebugSymbols=true
+            else
+              echo "Skipping sample/test project: $project"
+            fi
+          fi
+        done
+
+    - name: List and verify packages
+      run: |
+        echo "Generated packages:"
+        ls -la ./packages/
+        echo ""
+        echo "Package details:"
+        for pkg in ./packages/*.nupkg; do
+          if [ -f "$pkg" ]; then
+            echo "Package: $(basename $pkg)"
+            unzip -l "$pkg" | grep -E '\.(dll|pdb)$' || echo "No DLL/PDB files found"
+            echo "---"
+          fi
+        done
+
+    - name: Verify package content
+      run: |
+        echo "Checking for symbol package issues..."
+        for snupkg in ./packages/*.snupkg; do
+          if [ -f "$snupkg" ]; then
+            pkg_name=$(basename "$snupkg" .snupkg).nupkg
+            if [ -f "./packages/$pkg_name" ]; then
+              echo "Checking symbol package: $(basename $snupkg)"
+              # List contents of symbol package
+              echo "PDB files in symbol package:"
+              unzip -l "$snupkg" | grep '\.pdb$' || echo "No PDB files in symbol package"
+              # List DLLs in main package
+              echo "DLL files in main package:"
+              unzip -l "./packages/$pkg_name" | grep '\.dll$' || echo "No DLL files in main package"
+              echo "---"
+            fi
+          fi
+        done
+
+    - name: Publish to NuGet
+      run: |
+        echo "Pushing main packages..."
+        for pkg in ./packages/*.nupkg; do
+          if [ -f "$pkg" ]; then
+            echo "Pushing: $(basename $pkg)"
+            dotnet nuget push "$pkg" \
+              --source https://api.nuget.org/v3/index.json \
+              --api-key ${{ secrets.NUGET_API_KEY }} \
+              --skip-duplicate \
+              --timeout 300
+          fi
+        done
+
+    - name: Publish to GitHub Packages
+      run: |
+        echo "Pushing main packages..."
+        for pkg in ./packages/*.nupkg; do
+          if [ -f "$pkg" ]; then
+            echo "Pushing: $(basename $pkg)"
+            dotnet nuget push "$pkg" \
+              --source https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json \
+              --api-key ${{ secrets.GITHUB_TOKEN }} \
+              --skip-duplicate \
+              --timeout 300
+          fi
+        done
+
+    - name: Create GitHub Release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: v${{ steps.version.outputs.VERSION }}
+        release_name: Release ${{ steps.version.outputs.VERSION }}
+        body: |
+          ## Changes in ${{ steps.version.outputs.VERSION }}
+          
+          ### NuGet Packages Published:
+          - Arcanic.Result v${{ steps.version.outputs.VERSION }}
+          
+          See the [packages on NuGet.org](https://www.nuget.org/packages?q=Arcanic.Result)
+        draft: false
+        prerelease: false
+
+    - name: Upload packages as artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: nuget-packages-${{ steps.version.outputs.VERSION }}
+        path: |
+          ./packages/*.nupkg
+          ./packages/*.snupkg
+        retention-days: 90
