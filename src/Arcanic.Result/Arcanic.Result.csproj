@@ -1,15 +1,9 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
-    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <PackageId>Arcanic.Result</PackageId>
-    <PackageVersion>1.0.0</PackageVersion>
-    <Authors>Arcanic</Authors>
     <Description>A robust Result pattern implementation for .NET applications inspired by functional programming principles</Description>
-    <PackageTags>result;functional;error-handling;railway-oriented</PackageTags>
+    <PackageTags>result;result-pattern;functional;error-handling;railway-oriented;dotnet</PackageTags>
   </PropertyGroup>
 
 </Project>
