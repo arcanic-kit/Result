@@ -1,6 +1,10 @@
 <Solution>
   <Folder Name="/.github/" />
-  <Folder Name="/.github/workflows/" />
+  <Folder Name="/.github/workflows/">
+    <File Path=".github/workflows/build-and-test.yml" />
+    <File Path=".github/workflows/README.md" />
+    <File Path=".github/workflows/release.yml" />
+  </Folder>
   <Folder Name="/.solution-items/">
     <File Path=".gitignore" />
     <File Path="LICENSE" />
