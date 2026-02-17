@@ -2,7 +2,7 @@ name: Build and Test
 
 on:
   pull_request:
-    branches: [ main, develop ]
+    branches: [ main ]
 
 env:
   DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true
@@ -27,14 +27,14 @@ jobs:
         dotnet-version: ${{ matrix.dotnet-version }}
 
     - name: Restore dependencies
-      run: dotnet restore Arcanic.Mediator.slnx
+      run: dotnet restore Arcanic.Result.slnx
 
     - name: Build
-      run: dotnet build Arcanic.Mediator.slnx --configuration Release --no-restore
+      run: dotnet build Arcanic.Result.slnx --configuration Release --no-restore
 
     - name: Test
       run: |
-        dotnet test Arcanic.Mediator.slnx \
+        dotnet test Arcanic.Result.slnx \
           --configuration Release \
           --no-build \
           --verbosity normal \
@@ -43,7 +43,7 @@ jobs:
 
     - name: Pack (validation)
       run: |
-        dotnet pack Arcanic.Mediator.slnx \
+        dotnet pack Arcanic.Result.slnx \
           --configuration Release \
           --no-build \
           --output ./packages
