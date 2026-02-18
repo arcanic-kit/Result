@@ -11,6 +11,12 @@
     <File Path="README.md" />
   </Folder>
   <Folder Name="/samples/" />
+  <Folder Name="/samples/CleanArchitecture/">
+    <Project Path="samples/CleanArchitecture/CleanArchitecture.Application/CleanArchitecture.Application.csproj" />
+    <Project Path="samples/CleanArchitecture/CleanArchitecture.Domain/CleanArchitecture.Domain.csproj" />
+    <Project Path="samples/CleanArchitecture/CleanArchitecture.Infrastructure/CleanArchitecture.Infrastructure.csproj" />
+    <Project Path="samples/CleanArchitecture/CleanArchitecture.WebApi/CleanArchitecture.WebApi.csproj" />
+  </Folder>
   <Folder Name="/src/">
     <File Path="src/Directory.Build.props" />
     <File Path="src/Directory.Packages.props" />
