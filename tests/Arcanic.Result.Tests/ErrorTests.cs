@@ -77,17 +77,5 @@ namespace Arcanic.Result.Tests
             Assert.Equal(string.Empty, error.Description);
             Assert.Equal(ErrorType.Failure, error.Type);
         }
-
-        [Fact]
-        public void NullValue_ShouldHaveExpectedValues()
-        {
-            // Act
-            var error = Error.NullValue;
-
-            // Assert
-            Assert.Equal("Error.NullValue", error.Code);
-            Assert.Equal("The specified result value is null.", error.Description);
-            Assert.Equal(ErrorType.Failure, error.Type);
-        }
     }
 }

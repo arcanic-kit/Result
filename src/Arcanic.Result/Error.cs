@@ -11,11 +11,6 @@ public sealed record Error(string Code, string Description, ErrorType Type)
     public static readonly Error None = new(string.Empty, string.Empty, ErrorType.Failure);
 
     /// <summary>
-    /// Gets a null value error instance.
-    /// </summary>
-    public static readonly Error NullValue = new("Error.NullValue", "The specified result value is null.", ErrorType.Failure);
-
-    /// <summary>
     /// Creates a new failure error.
     /// </summary>
     /// <param name="code">The error code.</param>
