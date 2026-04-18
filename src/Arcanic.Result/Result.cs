@@ -63,13 +63,7 @@ public class Result
     /// <returns>A failed result with the specified error.</returns>
     public static FailureResult Failure(Error error) => new(error);
 
-    /// <summary>
-    /// Creates a failed result with a value type.
-    /// </summary>
-    /// <typeparam name="TValue">The value type.</typeparam>
-    /// <param name="error">The error.</param>
-    /// <returns>A failed result with the specified error.</returns>
-    public static Result<TValue> Failure<TValue>(Error error) => new(default, false, error);
+    internal static Result<TValue> Failure<TValue>(Error error) => new(default, false, error);
 
     /// <summary>
     /// Matches the result and executes the appropriate function.

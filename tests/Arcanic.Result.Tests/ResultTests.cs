@@ -52,7 +52,7 @@ namespace Arcanic.Result.Tests
             var error = Error.Failure("Test.Error", "Test error description");
 
             // Act
-            var result = Result.Failure<string>(error);
+            Result<string> result = Result.Failure(error);
 
             // Assert
             Assert.False(result.IsSuccess);
@@ -65,7 +65,7 @@ namespace Arcanic.Result.Tests
         {
             // Arrange
             var error = Error.Failure("Test.Error", "Test error description");
-            var result = Result.Failure<string>(error);
+            Result<string> result = Result.Failure(error);
 
             // Act & Assert
             Assert.Throws<InvalidOperationException>(() => result.Value);
@@ -117,7 +117,7 @@ namespace Arcanic.Result.Tests
         {
             // Arrange
             var error = Error.Failure("Test.Error", "Test error description");
-            var result = Result.Failure<string>(error);
+            Result<string> result = Result.Failure(error);
             var executed = false;
 
             // Act
