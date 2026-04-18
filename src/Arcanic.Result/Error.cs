@@ -3,11 +3,14 @@ namespace Arcanic.Result;
 /// <summary>
 /// Represents an error with a code, description, and type.
 /// </summary>
+/// <param name="Code">A short identifier for the error (e.g. <c>Product.NotFound</c>).</param>
+/// <param name="Description">A human-readable message describing the error.</param>
+/// <param name="Type">The category of the error.</param>
 [DebuggerDisplay("{Type}: {Code} - {Description}")]
 public sealed record Error(string Code, string Description, ErrorType Type)
 {
     /// <summary>
-    /// Gets an empty error instance.
+    /// Gets a sentinel error instance used to represent the absence of an error on a successful result.
     /// </summary>
     public static readonly Error None = new(string.Empty, string.Empty, ErrorType.Failure);
 
