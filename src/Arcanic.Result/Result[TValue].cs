@@ -67,4 +67,10 @@ public class Result<TValue> : Result
     /// </summary>
     /// <param name="error">The error.</param>
     public static implicit operator Result<TValue>(Error error) => Failure<TValue>(error);
+
+    /// <summary>
+    /// Implicitly converts a <see cref="FailureResult"/> to a typed failed result.
+    /// </summary>
+    /// <param name="failure">The failure result.</param>
+    public static implicit operator Result<TValue>(FailureResult failure) => Failure<TValue>(failure.Error);
 }

@@ -56,11 +56,11 @@ public class Result
     public static Result<TValue> Success<TValue>(TValue value) => new(value, true, Error.None);
 
     /// <summary>
-    /// Creates a failed result.
+    /// Creates a failed result. The return value implicitly converts to <see cref="Result"/> or <see cref="Result{TValue}"/>.
     /// </summary>
     /// <param name="error">The error.</param>
     /// <returns>A failed result with the specified error.</returns>
-    public static Result Failure(Error error) => new(false, error);
+    public static FailureResult Failure(Error error) => new(error);
 
     /// <summary>
     /// Creates a failed result with a value type.
@@ -101,5 +101,5 @@ public class Result
     /// Implicitly converts an error to a failed result.
     /// </summary>
     /// <param name="error">The error.</param>
-    public static implicit operator Result(Error error) => Failure(error);
+    public static implicit operator Result(Error error) => new(false, error);
 }
