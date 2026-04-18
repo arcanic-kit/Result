@@ -58,8 +58,10 @@ public sealed class Result<TValue> : Result
 
     /// <summary>
     /// Implicitly converts a value to a successful result.
+    /// A <see langword="null"/> value produces a failed result with <see cref="Error.None"/>.
     /// </summary>
-    /// <param name="value">The value.</param>
+    /// <param name="value">The value to wrap.</param>
+    /// <returns>A successful result containing <paramref name="value"/>, or a failed result if <paramref name="value"/> is <see langword="null"/>.</returns>
     public static implicit operator Result<TValue>(TValue? value) =>
         value is not null ? Success(value) : Failure<TValue>(Error.None);
 
@@ -67,11 +69,15 @@ public sealed class Result<TValue> : Result
     /// Implicitly converts an error to a failed result.
     /// </summary>
     /// <param name="error">The error.</param>
+    /// <returns>A failed result with the specified error.</returns>
     public static implicit operator Result<TValue>(Error error) => Failure<TValue>(error);
 
     /// <summary>
-    /// Implicitly converts a <see cref="FailureResult"/> to a typed failed result.
+    /// Implicitly converts a <see cref="FailureResult"/> to a typed failed result,
+    /// allowing <see cref="Result.Failure"/> to be used in methods returning <see cref="Result{TValue}"/>
+    /// without specifying the type parameter explicitly.
     /// </summary>
-    /// <param name="failure">The failure result.</param>
+    /// <param name="failure">The failure result to convert.</param>
+    /// <returns>A failed result with the error from <paramref name="failure"/>.</returns>
     public static implicit operator Result<TValue>(FailureResult failure) => Failure<TValue>(failure.Error);
 }
