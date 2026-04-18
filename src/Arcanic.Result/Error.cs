@@ -3,6 +3,7 @@ namespace Arcanic.Result;
 /// <summary>
 /// Represents an error with a code, description, and type.
 /// </summary>
+[DebuggerDisplay("{Type}: {Code} - {Description}")]
 public sealed record Error(string Code, string Description, ErrorType Type)
 {
     /// <summary>

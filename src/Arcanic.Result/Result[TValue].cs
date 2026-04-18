@@ -4,6 +4,7 @@ namespace Arcanic.Result;
 /// Represents the result of an operation that can either succeed with a value or fail.
 /// </summary>
 /// <typeparam name="TValue">The type of the value.</typeparam>
+[DebuggerDisplay("{IsSuccess ? \"Success: \" + Value : \"Failure: \" + Error.Code}")]
 public sealed class Result<TValue> : Result
 {
     private readonly TValue? _value;

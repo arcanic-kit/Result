@@ -4,6 +4,7 @@ namespace Arcanic.Result;
 /// Represents a failed result that can be implicitly converted to either <see cref="Result"/> or <see cref="Result{TValue}"/>
 /// without specifying the value type.
 /// </summary>
+[DebuggerDisplay("Failure: {Error.Code}")]
 public readonly struct FailureResult
 {
     private readonly Result _result;
