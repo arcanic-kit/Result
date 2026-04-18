@@ -4,7 +4,7 @@ namespace Arcanic.Result;
 /// Represents the result of an operation that can either succeed with a value or fail.
 /// </summary>
 /// <typeparam name="TValue">The type of the value.</typeparam>
-public class Result<TValue> : Result
+public sealed class Result<TValue> : Result
 {
     private readonly TValue? _value;
 
@@ -14,7 +14,7 @@ public class Result<TValue> : Result
     /// <param name="value">The value.</param>
     /// <param name="isSuccess">A value indicating whether the result is successful.</param>
     /// <param name="error">The error.</param>
-    protected internal Result(TValue? value, bool isSuccess, Error error)
+    internal Result(TValue? value, bool isSuccess, Error error)
         : base(isSuccess, error)
     {
         _value = value;
