@@ -128,5 +128,154 @@ namespace Arcanic.Result.Tests
             // Assert
             Assert.True(executed);
         }
+
+        [Fact]
+        public void Match_Generic_WithSuccessResult_ShouldReturnMappedValue()
+        {
+            // Arrange
+            var result = Result.Success("hello");
+
+            // Act
+            var output = result.Match(
+                value => value.Length,
+                error => -1);
+
+            // Assert
+            Assert.Equal(5, output);
+        }
+
+        [Fact]
+        public void Match_Generic_WithFailureResult_ShouldReturnFallbackValue()
+        {
+            // Arrange
+            var error = Error.Failure("Test.Error", "Test error description");
+            Result<string> result = Result.Failure(error);
+
+            // Act
+            var output = result.Match(
+                value => value.Length,
+                err => -1);
+
+            // Assert
+            Assert.Equal(-1, output);
+        }
+
+        [Fact]
+        public void Match_Action_NonGenericResult_WithSuccessResult_ShouldExecuteOnSuccess()
+        {
+            // Arrange
+            var result = Result.Success();
+            var executed = false;
+
+            // Act
+            result.Match(
+                () => executed = true,
+                error => executed = false);
+
+            // Assert
+            Assert.True(executed);
+        }
+
+        [Fact]
+        public void Match_Action_NonGenericResult_WithFailureResult_ShouldExecuteOnFailure()
+        {
+            // Arrange
+            var error = Error.Failure("Test.Error", "Test error description");
+            Result result = Result.Failure(error);
+            var executed = false;
+
+            // Act
+            result.Match(
+                () => executed = false,
+                err => executed = true);
+
+            // Assert
+            Assert.True(executed);
+        }
+
+        [Fact]
+        public void Match_Generic_NonGenericResult_WithSuccessResult_ShouldReturnMappedValue()
+        {
+            // Arrange
+            var result = Result.Success();
+
+            // Act
+            var output = result.Match(
+                () => "success",
+                error => "failure");
+
+            // Assert
+            Assert.Equal("success", output);
+        }
+
+        [Fact]
+        public void Match_Generic_NonGenericResult_WithFailureResult_ShouldReturnFallbackValue()
+        {
+            // Arrange
+            var error = Error.Failure("Test.Error", "Test error description");
+            Result result = Result.Failure(error);
+
+            // Act
+            var output = result.Match(
+                () => "success",
+                err => "failure");
+
+            // Assert
+            Assert.Equal("failure", output);
+        }
+
+        [Fact]
+        public void ImplicitConversion_FromNullValue_ShouldThrowInvalidOperationException()
+        {
+            // The implicit conversion attempts Failure<TValue>(Error.None), which violates
+            // the constructor invariant that a failed result must have a non-None error.
+            Assert.Throws<InvalidOperationException>(() => { Result<string> _ = (string?)null; });
+        }
+
+        [Fact]
+        public void ImplicitConversion_FromErrorToTypedResult_ShouldCreateFailedResult()
+        {
+            // Arrange
+            var error = Error.NotFound("Product.NotFound", "Product was not found");
+
+            // Act
+            Result<string> result = error;
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Equal(error, result.Error);
+        }
+
+        [Fact]
+        public void ImplicitConversion_FromFailureResult_ShouldCreateTypedFailedResult()
+        {
+            // Arrange
+            var error = Error.Validation("Name.Empty", "Name cannot be empty");
+            FailureResult failureResult = Result.Failure(error);
+
+            // Act
+            Result<int> result = failureResult;
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Equal(error, result.Error);
+        }
+
+        [Fact]
+        public void Match_WithFailureResult_ShouldReceiveCorrectError()
+        {
+            // Arrange
+            var error = Error.NotFound("Item.NotFound", "Item was not found");
+            Result<string> result = Result.Failure(error);
+            Error? capturedError = null;
+
+            // Act
+            result.Match(
+                value => { },
+                err => capturedError = err);
+
+            // Assert
+            Assert.Equal(error, capturedError);
+        }
     }
 }

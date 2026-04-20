@@ -77,5 +77,44 @@ namespace Arcanic.Result.Tests
             Assert.Equal(string.Empty, error.Description);
             Assert.Equal(ErrorType.Failure, error.Type);
         }
+
+        [Fact]
+        public void None_ShouldEqualAnotherNoneInstance()
+        {
+            Assert.Equal(Error.None, Error.None);
+        }
+
+        [Fact]
+        public void Error_SameValues_ShouldBeEqual()
+        {
+            // Arrange
+            var a = Error.Failure("Test.Error", "Test description");
+            var b = Error.Failure("Test.Error", "Test description");
+
+            // Assert
+            Assert.Equal(a, b);
+        }
+
+        [Fact]
+        public void Error_DifferentCode_ShouldNotBeEqual()
+        {
+            // Arrange
+            var a = Error.Failure("Error.A", "Same description");
+            var b = Error.Failure("Error.B", "Same description");
+
+            // Assert
+            Assert.NotEqual(a, b);
+        }
+
+        [Fact]
+        public void Error_DifferentType_ShouldNotBeEqual()
+        {
+            // Arrange
+            var a = Error.Failure("Test.Error", "Same description");
+            var b = Error.Validation("Test.Error", "Same description");
+
+            // Assert
+            Assert.NotEqual(a, b);
+        }
     }
 }
