@@ -1,6 +1,6 @@
 # GitHub Actions CI/CD Setup
 
-This directory contains GitHub Actions workflows for the Arcanic.Mediator project.
+This directory contains GitHub Actions workflows for the Arcanic.Result project.
 
 ## Workflows
 
@@ -13,7 +13,7 @@ This directory contains GitHub Actions workflows for the Arcanic.Mediator projec
 - Builds the solution across multiple .NET versions (8, 9, 10)
 - Runs all tests with code coverage collection
 - Validates package creation
-- Uses the `Arcanic.Mediator.slnx` solution file
+- Uses the `Arcanic.Result.slnx` solution file
 
 ### 2. Release Workflow (`release.yml`)
 
@@ -69,16 +69,7 @@ The workflow automatically handles version information:
 ### 4. Package Output
 
 The workflow creates packages for the source projects in the solution:
-- `Arcanic.Mediator`
-- `Arcanic.Mediator.Abstractions` 
-- `Arcanic.Mediator.Command`
-- `Arcanic.Mediator.Command.Abstractions`
-- `Arcanic.Mediator.Event`
-- `Arcanic.Mediator.Event.Abstractions`
-- `Arcanic.Mediator.Query`
-- `Arcanic.Mediator.Query.Abstractions`
-- `Arcanic.Mediator.Request`
-- `Arcanic.Mediator.Request.Abstractions`
+- `Arcanic.Result`
 
 Note: Sample projects, test projects, and benchmarks are excluded from packaging.
 
