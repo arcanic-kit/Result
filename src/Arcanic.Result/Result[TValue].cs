@@ -5,7 +5,7 @@ namespace Arcanic.Result;
 /// </summary>
 /// <typeparam name="TValue">The type of the value.</typeparam>
 [DebuggerDisplay("{IsSuccess ? \"Success: \" + Value : \"Failure: \" + Error.Code}")]
-public sealed class Result<TValue> : Result
+public class Result<TValue>
 {
     private readonly TValue? _value;
 
@@ -16,10 +16,36 @@ public sealed class Result<TValue> : Result
     /// <param name="isSuccess">A value indicating whether the result is successful.</param>
     /// <param name="error">The error.</param>
     internal Result(TValue? value, bool isSuccess, Error error)
-        : base(isSuccess, error)
     {
+        if (isSuccess && error != Error.None)
+        {
+            throw new InvalidOperationException("Invalid result. A successful result cannot have an error.");
+        }
+
+        if (!isSuccess && error == Error.None)
+        {
+            throw new InvalidOperationException("Invalid result. A failed result must have an error.");
+        }
+
         _value = value;
+        IsSuccess = isSuccess;
+        Error = error;
     }
+
+    /// <summary>
+    /// Gets a value indicating whether the result is successful.
+    /// </summary>
+    public bool IsSuccess { get; }
+
+    /// <summary>
+    /// Gets a value indicating whether the result is a failure.
+    /// </summary>
+    public bool IsFailure => !IsSuccess;
+
+    /// <summary>
+    /// Gets the error.
+    /// </summary>
+    public Error Error { get; }
 
     /// <summary>
     /// Gets the value if the result is successful.
@@ -28,6 +54,15 @@ public sealed class Result<TValue> : Result
     public TValue Value => IsSuccess
         ? _value!
         : throw new InvalidOperationException("The value of a failure result can not be accessed.");
+
+    /// <summary>
+    /// Creates a successful result with a value.
+    /// </summary>
+    /// <param name="value">The value.</param>
+    /// <returns>A successful result with the specified value.</returns>
+    public static Result<TValue> Success(TValue value) => new(value, true, Error.None);
+
+    internal static Result<TValue> Failure(Error error) => new(default, false, error);
 
     /// <summary>
     /// Matches the result and executes the appropriate function.
@@ -63,14 +98,14 @@ public sealed class Result<TValue> : Result
     /// <param name="value">The value to wrap.</param>
     /// <returns>A successful result containing <paramref name="value"/>, or a failed result if <paramref name="value"/> is <see langword="null"/>.</returns>
     public static implicit operator Result<TValue>(TValue? value) =>
-        value is not null ? Success(value) : Failure<TValue>(Error.None);
+        value is not null ? Success(value) : Failure(Error.None);
 
     /// <summary>
     /// Implicitly converts an error to a failed result.
     /// </summary>
     /// <param name="error">The error.</param>
     /// <returns>A failed result with the specified error.</returns>
-    public static implicit operator Result<TValue>(Error error) => Failure<TValue>(error);
+    public static implicit operator Result<TValue>(Error error) => Failure(error);
 
     /// <summary>
     /// Implicitly converts a <see cref="FailureResult"/> to a typed failed result,
@@ -79,5 +114,5 @@ public sealed class Result<TValue> : Result
     /// </summary>
     /// <param name="failure">The failure result to convert.</param>
     /// <returns>A failed result with the error from <paramref name="failure"/>.</returns>
-    public static implicit operator Result<TValue>(FailureResult failure) => Failure<TValue>(failure.Error);
+    public static implicit operator Result<TValue>(FailureResult failure) => Failure(failure.Error);
 }

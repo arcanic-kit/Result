@@ -4,7 +4,7 @@ namespace Arcanic.Result;
 /// Represents the result of an operation that can either succeed or fail.
 /// </summary>
 [DebuggerDisplay("{IsSuccess ? \"Success\" : \"Failure: \" + Error.Code}")]
-public class Result
+public class Result : Result<Result>
 {
     /// <summary>
     /// Initializes a new instance of the <see cref="Result"/> class.
@@ -12,35 +12,9 @@ public class Result
     /// <param name="isSuccess">A value indicating whether the result is successful.</param>
     /// <param name="error">The error.</param>
     internal Result(bool isSuccess, Error error)
+        : base(default, isSuccess, error)
     {
-        if (isSuccess && error != Error.None)
-        {
-            throw new InvalidOperationException("Invalid result. A successful result cannot have an error.");
-        }
-
-        if (!isSuccess && error == Error.None)
-        {
-            throw new InvalidOperationException("Invalid result. A failed result must have an error.");
-        }
-
-        IsSuccess = isSuccess;
-        Error = error;
     }
-
-    /// <summary>
-    /// Gets a value indicating whether the result is successful.
-    /// </summary>
-    public bool IsSuccess { get; }
-
-    /// <summary>
-    /// Gets a value indicating whether the result is a failure.
-    /// </summary>
-    public bool IsFailure => !IsSuccess;
-
-    /// <summary>
-    /// Gets the error.
-    /// </summary>
-    public Error Error { get; }
 
     /// <summary>
     /// Creates a successful result.
@@ -61,7 +35,7 @@ public class Result
     /// </summary>
     /// <param name="error">The error.</param>
     /// <returns>A failed result with the specified error.</returns>
-    public static FailureResult Failure(Error error) => new(error);
+    public new static FailureResult Failure(Error error) => new(error);
 
     internal static Result<TValue> Failure<TValue>(Error error) => new(default, false, error);
 
