@@ -52,7 +52,7 @@ namespace Arcanic.Result.Tests
             var error = Error.Failure("Test.Error", "Test error description");
 
             // Act
-            Result<string> result = Result.Failure<string>(error);
+            Result<string> result = Result.Failure(error);
 
             // Assert
             Assert.False(result.IsSuccess);
@@ -65,7 +65,7 @@ namespace Arcanic.Result.Tests
         {
             // Arrange
             var error = Error.Failure("Test.Error", "Test error description");
-            Result<string> result = Result.Failure<string>(error);
+            Result<string> result = Result.Failure(error);
 
             // Act & Assert
             Assert.Throws<InvalidOperationException>(() => result.Value);
@@ -117,7 +117,7 @@ namespace Arcanic.Result.Tests
         {
             // Arrange
             var error = Error.Failure("Test.Error", "Test error description");
-            Result<string> result = Result.Failure<string>(error);
+            Result<string> result = Result.Failure(error);
             var executed = false;
 
             // Act
@@ -149,7 +149,7 @@ namespace Arcanic.Result.Tests
         {
             // Arrange
             var error = Error.Failure("Test.Error", "Test error description");
-            Result<string> result = Result.Failure<string>(error);
+            Result<string> result = Result.Failure(error);
 
             // Act
             var output = result.Match(
@@ -233,13 +233,13 @@ namespace Arcanic.Result.Tests
         }
 
         [Fact]
-        public void Failure_TypedWithError_ShouldCreateFailedResult()
+        public void Failure_ImplicitToTypedResult_ShouldCreateFailedResult()
         {
             // Arrange
             var error = Error.NotFound("Product.NotFound", "Product was not found");
 
             // Act
-            Result<string> result = Result.Failure<string>(error);
+            Result<string> result = Result.Failure(error);
 
             // Assert
             Assert.False(result.IsSuccess);
@@ -251,7 +251,7 @@ namespace Arcanic.Result.Tests
         {
             // Arrange
             var error = Error.NotFound("Item.NotFound", "Item was not found");
-            Result<string> result = Result.Failure<string>(error);
+            Result<string> result = Result.Failure(error);
             Error? capturedError = null;
 
             // Act

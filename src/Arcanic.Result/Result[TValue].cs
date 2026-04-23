@@ -104,4 +104,12 @@ public class Result<TValue>
     /// <returns>A successful result containing <paramref name="value"/>, or a failed result if <paramref name="value"/> is <see langword="null"/>.</returns>
     public static implicit operator Result<TValue>(TValue? value) =>
         value is not null ? Success(value) : Failure(Error.None);
+
+    /// <summary>
+    /// Implicitly converts a failed <see cref="Result"/> to a typed failed result,
+    /// allowing <see cref="Result.Failure"/> to be returned from methods that return <see cref="Result{TValue}"/>.
+    /// </summary>
+    /// <param name="result">The failed result to convert.</param>
+    /// <returns>A typed failed result carrying the same error.</returns>
+    public static implicit operator Result<TValue>(Result result) => Failure(result.Error);
 }
