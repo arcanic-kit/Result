@@ -49,4 +49,22 @@ public sealed record Error(string Code, string Description, ErrorType Type)
     /// <returns>A new Error instance with not found type.</returns>
     public static Error NotFound(string code, string description) =>
         new(code, description, ErrorType.NotFound);
+
+    /// <summary>
+    /// Creates a new unauthorized error (unauthenticated).
+    /// </summary>
+    /// <param name="code">The error code.</param>
+    /// <param name="description">The error description.</param>
+    /// <returns>A new Error instance with unauthorized type.</returns>
+    public static Error Unauthorized(string code, string description) =>
+        new(code, description, ErrorType.Unauthorized);
+
+    /// <summary>
+    /// Creates a new forbidden error (authenticated but lacking permission).
+    /// </summary>
+    /// <param name="code">The error code.</param>
+    /// <param name="description">The error description.</param>
+    /// <returns>A new Error instance with forbidden type.</returns>
+    public static Error Forbidden(string code, string description) =>
+        new(code, description, ErrorType.Forbidden);
 }

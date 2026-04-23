@@ -107,6 +107,38 @@ namespace Arcanic.Result.Tests
         }
 
         [Fact]
+        public void Unauthorized_ShouldCreateErrorWithUnauthorizedType()
+        {
+            // Arrange
+            const string code = "Test.Unauthorized";
+            const string description = "Test unauthorized description";
+
+            // Act
+            var error = Error.Unauthorized(code, description);
+
+            // Assert
+            Assert.Equal(code, error.Code);
+            Assert.Equal(description, error.Description);
+            Assert.Equal(ErrorType.Unauthorized, error.Type);
+        }
+
+        [Fact]
+        public void Forbidden_ShouldCreateErrorWithForbiddenType()
+        {
+            // Arrange
+            const string code = "Test.Forbidden";
+            const string description = "Test forbidden description";
+
+            // Act
+            var error = Error.Forbidden(code, description);
+
+            // Assert
+            Assert.Equal(code, error.Code);
+            Assert.Equal(description, error.Description);
+            Assert.Equal(ErrorType.Forbidden, error.Type);
+        }
+
+        [Fact]
         public void Error_DifferentType_ShouldNotBeEqual()
         {
             // Arrange

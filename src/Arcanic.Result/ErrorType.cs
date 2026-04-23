@@ -23,5 +23,15 @@ public enum ErrorType
     /// <summary>
     /// Represents a not found error.
     /// </summary>
-    NotFound = 3
+    NotFound = 3,
+
+    /// <summary>
+    /// Represents an unauthorized error (unauthenticated).
+    /// </summary>
+    Unauthorized = 4,
+
+    /// <summary>
+    /// Represents a forbidden error (authenticated but lacking permission).
+    /// </summary>
+    Forbidden = 5
 }
