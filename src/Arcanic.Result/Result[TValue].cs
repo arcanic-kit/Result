@@ -102,5 +102,8 @@ public class Result<TValue>
     /// </summary>
     /// <param name="result">The failed result to convert.</param>
     /// <returns>A typed failed result carrying the same error.</returns>
-    public static implicit operator Result<TValue>(Result result) => Failure(result.Error);
+    public static implicit operator Result<TValue>(Result result) =>
+        result.IsFailure
+            ? Failure(result.Error)
+            : throw new InvalidOperationException("Cannot implicitly convert a successful Result to Result<TValue>. Use Result.Success<TValue>(value) instead.");
 }
