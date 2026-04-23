@@ -19,7 +19,7 @@ dotnet add package Arcanic.Result
 | `Result` | An operation that either succeeds or fails |
 | `Result<T>` | An operation that either succeeds with a value or fails |
 | `Error` | A structured error with a code, description, and category |
-| `ErrorType` | `Failure`, `Validation`, `NotFound`, `Conflict` |
+| `ErrorType` | `Failure`, `Validation`, `NotFound`, `Conflict`, `Unauthorized`, `Forbidden` |
 
 ### Creating results
 
@@ -36,10 +36,12 @@ Result<User> notFound = Result.Failure(Error.NotFound("User.NotFound", "User doe
 ### Error types
 
 ```csharp
-Error.Failure("DB.Error",       "Unexpected database error");
-Error.Validation("Email.Empty", "Email is required");
-Error.NotFound("User.NotFound", "User does not exist");
-Error.Conflict("Email.Taken",   "A user with this email already exists");
+Error.Failure("DB.Error",           "Unexpected database error");
+Error.Validation("Email.Empty",     "Email is required");
+Error.NotFound("User.NotFound",     "User does not exist");
+Error.Conflict("Email.Taken",       "A user with this email already exists");
+Error.Unauthorized("Auth.Required", "Authentication is required");
+Error.Forbidden("Role.Missing",     "You do not have permission to perform this action");
 ```
 
 ### Handling results with Match
@@ -86,9 +88,11 @@ public IActionResult Get(int id) =>
         onSuccess: user  => Ok(user),
         onFailure: error => error.Type switch
         {
-            ErrorType.NotFound   => NotFound(error.Description),
-            ErrorType.Validation => BadRequest(error.Description),
-            _                    => Problem(error.Description)
+            ErrorType.NotFound    => NotFound(error.Description),
+            ErrorType.Validation  => BadRequest(error.Description),
+            ErrorType.Unauthorized => Unauthorized(),
+            ErrorType.Forbidden   => Forbid(),
+            _                     => Problem(error.Description)
         });
 ```
 
