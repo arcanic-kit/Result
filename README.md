@@ -28,13 +28,9 @@ dotnet add package Arcanic.Result
 Result ok = Result.Success();
 Result<User> user = Result.Success(new User(...));
 
-// Failure
+// Failure — Result.Failure implicitly converts to Result<T>
 Result fail = Result.Failure(Error.Failure("DB.Timeout", "Database timed out"));
 Result<User> notFound = Result.Failure(Error.NotFound("User.NotFound", "User does not exist"));
-
-// Implicit conversions — handy inside methods
-Result<User> fromValue = someUser;            // success
-Result<User> fromError = Error.NotFound(...); // failure
 ```
 
 ### Error types
@@ -74,13 +70,13 @@ result.Match(
 public Result<User> GetUser(int id)
 {
     if (id <= 0)
-        return Error.Validation("User.InvalidId", "ID must be positive");
+        return Result.Failure(Error.Validation("User.InvalidId", "ID must be positive"));
 
     var user = _repository.GetById(id);
 
     return user is not null
         ? Result.Success(user)
-        : Error.NotFound("User.NotFound", "User does not exist");
+        : Result.Failure(Error.NotFound("User.NotFound", "User does not exist"));
 }
 
 // Controller

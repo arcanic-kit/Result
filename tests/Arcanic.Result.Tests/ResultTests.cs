@@ -72,10 +72,10 @@ namespace Arcanic.Result.Tests
         }
 
         [Fact]
-        public void ImplicitConversion_FromValue_ShouldCreateSuccessfulResult()
+        public void Success_WithValue_GenericResult_ShouldCreateSuccessfulResult()
         {
             // Act
-            Result<string> result = "test";
+            var result = Result.Success("test");
 
             // Assert
             Assert.True(result.IsSuccess);
@@ -222,14 +222,6 @@ namespace Arcanic.Result.Tests
 
             // Assert
             Assert.Equal("failure", output);
-        }
-
-        [Fact]
-        public void ImplicitConversion_FromNullValue_ShouldThrowInvalidOperationException()
-        {
-            // The implicit conversion attempts Failure<TValue>(Error.None), which violates
-            // the constructor invariant that a failed result must have a non-None error.
-            Assert.Throws<InvalidOperationException>(() => { Result<string> _ = (string?)null; });
         }
 
         [Fact]
