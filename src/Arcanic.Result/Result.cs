@@ -17,6 +17,13 @@ public class Result : Result<Result>
     }
 
     /// <summary>
+    /// This property is not supported on a void result. Use <see cref="Result{TValue}"/> for operations that return a value.
+    /// </summary>
+    /// <exception cref="InvalidOperationException">Always thrown.</exception>
+    public new Result Value =>
+        throw new InvalidOperationException("Result does not carry a value. Use Result<TValue> for operations that return a value.");
+
+    /// <summary>
     /// Creates a successful result.
     /// </summary>
     /// <returns>A successful result.</returns>
