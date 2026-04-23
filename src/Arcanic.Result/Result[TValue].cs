@@ -62,7 +62,12 @@ public class Result<TValue>
     /// <returns>A successful result with the specified value.</returns>
     public static Result<TValue> Success(TValue value) => new(value, true, Error.None);
 
-    internal static Result<TValue> Failure(Error error) => new(default, false, error);
+    /// <summary>
+    /// Creates a failed result.
+    /// </summary>
+    /// <param name="error">The error.</param>
+    /// <returns>A failed result with the specified error.</returns>
+    public static Result<TValue> Failure(Error error) => new(default, false, error);
 
     /// <summary>
     /// Matches the result and executes the appropriate function.
@@ -106,13 +111,4 @@ public class Result<TValue>
     /// <param name="error">The error.</param>
     /// <returns>A failed result with the specified error.</returns>
     public static implicit operator Result<TValue>(Error error) => Failure(error);
-
-    /// <summary>
-    /// Implicitly converts a <see cref="FailureResult"/> to a typed failed result,
-    /// allowing <see cref="Result.Failure"/> to be used in methods returning <see cref="Result{TValue}"/>
-    /// without specifying the type parameter explicitly.
-    /// </summary>
-    /// <param name="failure">The failure result to convert.</param>
-    /// <returns>A failed result with the error from <paramref name="failure"/>.</returns>
-    public static implicit operator Result<TValue>(FailureResult failure) => Failure(failure.Error);
 }

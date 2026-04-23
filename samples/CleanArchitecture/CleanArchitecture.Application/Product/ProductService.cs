@@ -19,8 +19,7 @@ public class ProductService : IProductService
 
         if (product == null)
         {
-            return Result.Failure(
-                Error.NotFound("Product.NotFound", $"Product with ID {id} was not found."));
+            return Error.NotFound("Product.NotFound", $"Product with ID {id} was not found.");
         }
 
         var productDto = new ProductDto
@@ -51,14 +50,12 @@ public class ProductService : IProductService
     {
         if (string.IsNullOrWhiteSpace(name))
         {
-            return Result.Failure(
-                Error.Validation("Product.Name.Empty", "Product name cannot be empty."));
+            return Error.Validation("Product.Name.Empty", "Product name cannot be empty.");
         }
 
         if (price < 0)
         {
-            return Result.Failure(
-                Error.Validation("Product.Price.Negative", "Product price cannot be negative."));
+            return Error.Validation("Product.Price.Negative", "Product price cannot be negative.");
         }
 
         var product = new Domain.Products.Product(0, name, price)

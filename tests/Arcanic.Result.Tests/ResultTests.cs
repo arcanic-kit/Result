@@ -52,7 +52,7 @@ namespace Arcanic.Result.Tests
             var error = Error.Failure("Test.Error", "Test error description");
 
             // Act
-            Result<string> result = Result.Failure(error);
+            Result<string> result = Result.Failure<string>(error);
 
             // Assert
             Assert.False(result.IsSuccess);
@@ -65,7 +65,7 @@ namespace Arcanic.Result.Tests
         {
             // Arrange
             var error = Error.Failure("Test.Error", "Test error description");
-            Result<string> result = Result.Failure(error);
+            Result<string> result = Result.Failure<string>(error);
 
             // Act & Assert
             Assert.Throws<InvalidOperationException>(() => result.Value);
@@ -117,7 +117,7 @@ namespace Arcanic.Result.Tests
         {
             // Arrange
             var error = Error.Failure("Test.Error", "Test error description");
-            Result<string> result = Result.Failure(error);
+            Result<string> result = Result.Failure<string>(error);
             var executed = false;
 
             // Act
@@ -149,7 +149,7 @@ namespace Arcanic.Result.Tests
         {
             // Arrange
             var error = Error.Failure("Test.Error", "Test error description");
-            Result<string> result = Result.Failure(error);
+            Result<string> result = Result.Failure<string>(error);
 
             // Act
             var output = result.Match(
@@ -247,26 +247,11 @@ namespace Arcanic.Result.Tests
         }
 
         [Fact]
-        public void ImplicitConversion_FromFailureResult_ShouldCreateTypedFailedResult()
-        {
-            // Arrange
-            var error = Error.Validation("Name.Empty", "Name cannot be empty");
-            FailureResult failureResult = Result.Failure(error);
-
-            // Act
-            Result<int> result = failureResult;
-
-            // Assert
-            Assert.False(result.IsSuccess);
-            Assert.Equal(error, result.Error);
-        }
-
-        [Fact]
         public void Match_WithFailureResult_ShouldReceiveCorrectError()
         {
             // Arrange
             var error = Error.NotFound("Item.NotFound", "Item was not found");
-            Result<string> result = Result.Failure(error);
+            Result<string> result = Result.Failure<string>(error);
             Error? capturedError = null;
 
             // Act
