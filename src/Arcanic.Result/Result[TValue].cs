@@ -104,11 +104,4 @@ public class Result<TValue>
     /// <returns>A successful result containing <paramref name="value"/>, or a failed result if <paramref name="value"/> is <see langword="null"/>.</returns>
     public static implicit operator Result<TValue>(TValue? value) =>
         value is not null ? Success(value) : Failure(Error.None);
-
-    /// <summary>
-    /// Implicitly converts an error to a failed result.
-    /// </summary>
-    /// <param name="error">The error.</param>
-    /// <returns>A failed result with the specified error.</returns>
-    public static implicit operator Result<TValue>(Error error) => Failure(error);
 }

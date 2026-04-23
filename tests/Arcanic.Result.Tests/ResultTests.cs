@@ -233,13 +233,13 @@ namespace Arcanic.Result.Tests
         }
 
         [Fact]
-        public void ImplicitConversion_FromErrorToTypedResult_ShouldCreateFailedResult()
+        public void Failure_TypedWithError_ShouldCreateFailedResult()
         {
             // Arrange
             var error = Error.NotFound("Product.NotFound", "Product was not found");
 
             // Act
-            Result<string> result = error;
+            Result<string> result = Result.Failure<string>(error);
 
             // Assert
             Assert.False(result.IsSuccess);
