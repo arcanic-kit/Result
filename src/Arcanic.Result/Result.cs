@@ -3,43 +3,25 @@ namespace Arcanic.Result;
 /// <summary>
 /// Represents the result of an operation that can either succeed or fail.
 /// </summary>
-public class Result
+[DebuggerDisplay("{IsSuccess ? \"Success\" : \"Failure: \" + Error.Code}")]
+public class Result : Result<Result>
 {
     /// <summary>
     /// Initializes a new instance of the <see cref="Result"/> class.
     /// </summary>
     /// <param name="isSuccess">A value indicating whether the result is successful.</param>
     /// <param name="error">The error.</param>
-    protected internal Result(bool isSuccess, Error error)
+    internal Result(bool isSuccess, Error error)
+        : base(default, isSuccess, error)
     {
-        if (isSuccess && error != Error.None)
-        {
-            throw new InvalidOperationException("Invalid result. A successful result cannot have an error.");
-        }
-
-        if (!isSuccess && error == Error.None)
-        {
-            throw new InvalidOperationException("Invalid result. A failed result must have an error.");
-        }
-
-        IsSuccess = isSuccess;
-        Error = error;
     }
 
     /// <summary>
-    /// Gets a value indicating whether the result is successful.
+    /// This property is not supported on a void result. Use <see cref="Result{TValue}"/> for operations that return a value.
     /// </summary>
-    public bool IsSuccess { get; }
-
-    /// <summary>
-    /// Gets a value indicating whether the result is a failure.
-    /// </summary>
-    public bool IsFailure => !IsSuccess;
-
-    /// <summary>
-    /// Gets the error.
-    /// </summary>
-    public Error Error { get; }
+    /// <exception cref="InvalidOperationException">Always thrown.</exception>
+    public new Result Value =>
+        throw new InvalidOperationException("Result does not carry a value. Use Result<TValue> for operations that return a value.");
 
     /// <summary>
     /// Creates a successful result.
@@ -60,15 +42,7 @@ public class Result
     /// </summary>
     /// <param name="error">The error.</param>
     /// <returns>A failed result with the specified error.</returns>
-    public static Result Failure(Error error) => new(false, error);
-
-    /// <summary>
-    /// Creates a failed result with a value type.
-    /// </summary>
-    /// <typeparam name="TValue">The value type.</typeparam>
-    /// <param name="error">The error.</param>
-    /// <returns>A failed result with the specified error.</returns>
-    public static Result<TValue> Failure<TValue>(Error error) => new(default, false, error);
+    public new static Result Failure(Error error) => new(false, error);
 
     /// <summary>
     /// Matches the result and executes the appropriate function.
@@ -101,5 +75,5 @@ public class Result
     /// Implicitly converts an error to a failed result.
     /// </summary>
     /// <param name="error">The error.</param>
-    public static implicit operator Result(Error error) => Failure(error);
+    public static implicit operator Result(Error error) => new(false, error);
 }

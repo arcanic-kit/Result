@@ -4,7 +4,8 @@ namespace Arcanic.Result;
 /// Represents the result of an operation that can either succeed with a value or fail.
 /// </summary>
 /// <typeparam name="TValue">The type of the value.</typeparam>
-public class Result<TValue> : Result
+[DebuggerDisplay("{IsSuccess ? \"Success: \" + Value : \"Failure: \" + Error.Code}")]
+public class Result<TValue>
 {
     private readonly TValue? _value;
 
@@ -14,11 +15,37 @@ public class Result<TValue> : Result
     /// <param name="value">The value.</param>
     /// <param name="isSuccess">A value indicating whether the result is successful.</param>
     /// <param name="error">The error.</param>
-    protected internal Result(TValue? value, bool isSuccess, Error error)
-        : base(isSuccess, error)
+    internal Result(TValue? value, bool isSuccess, Error error)
     {
+        if (isSuccess && error != Error.None)
+        {
+            throw new InvalidOperationException("Invalid result. A successful result cannot have an error.");
+        }
+
+        if (!isSuccess && error == Error.None)
+        {
+            throw new InvalidOperationException("Invalid result. A failed result must have an error.");
+        }
+
         _value = value;
+        IsSuccess = isSuccess;
+        Error = error;
     }
+
+    /// <summary>
+    /// Gets a value indicating whether the result is successful.
+    /// </summary>
+    public bool IsSuccess { get; }
+
+    /// <summary>
+    /// Gets a value indicating whether the result is a failure.
+    /// </summary>
+    public bool IsFailure => !IsSuccess;
+
+    /// <summary>
+    /// Gets the error.
+    /// </summary>
+    public Error Error { get; }
 
     /// <summary>
     /// Gets the value if the result is successful.
@@ -27,6 +54,10 @@ public class Result<TValue> : Result
     public TValue Value => IsSuccess
         ? _value!
         : throw new InvalidOperationException("The value of a failure result can not be accessed.");
+
+    internal static Result<TValue> Success(TValue value) => new(value, true, Error.None);
+
+    internal static Result<TValue> Failure(Error error) => new(default, false, error);
 
     /// <summary>
     /// Matches the result and executes the appropriate function.
@@ -56,15 +87,13 @@ public class Result<TValue> : Result
     }
 
     /// <summary>
-    /// Implicitly converts a value to a successful result.
+    /// Implicitly converts a failed <see cref="Result"/> to a typed failed result,
+    /// allowing <see cref="Result.Failure"/> to be returned from methods that return <see cref="Result{TValue}"/>.
     /// </summary>
-    /// <param name="value">The value.</param>
-    public static implicit operator Result<TValue>(TValue? value) =>
-        value is not null ? Success(value) : Failure<TValue>(Error.NullValue);
-
-    /// <summary>
-    /// Implicitly converts an error to a failed result.
-    /// </summary>
-    /// <param name="error">The error.</param>
-    public static implicit operator Result<TValue>(Error error) => Failure<TValue>(error);
+    /// <param name="result">The failed result to convert.</param>
+    /// <returns>A typed failed result carrying the same error.</returns>
+    public static implicit operator Result<TValue>(Result result) =>
+        result.IsFailure
+            ? Failure(result.Error)
+            : throw new InvalidOperationException("Cannot implicitly convert a successful Result to Result<TValue>. Use Result.Success<TValue>(value) instead.");
 }

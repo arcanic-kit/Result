@@ -17,16 +17,13 @@ namespace Arcanic.Result.Tests
         [Fact]
         public void Success_WithValue_ShouldCreateSuccessfulResultWithValue()
         {
-            // Arrange
-            const string expectedValue = "test";
-
             // Act
-            var result = Result.Success(expectedValue);
+            var result = Result.Success("test");
 
             // Assert
             Assert.True(result.IsSuccess);
             Assert.False(result.IsFailure);
-            Assert.Equal(expectedValue, result.Value);
+            Assert.Equal("test", result.Value);
             Assert.Equal(Error.None, result.Error);
         }
 
@@ -46,13 +43,13 @@ namespace Arcanic.Result.Tests
         }
 
         [Fact]
-        public void Failure_WithValueType_ShouldCreateFailedResult()
+        public void Failure_ShouldImplicitlyConvertToTypedResult()
         {
             // Arrange
             var error = Error.Failure("Test.Error", "Test error description");
 
             // Act
-            var result = Result.Failure<string>(error);
+            Result<string> result = Result.Failure(error);
 
             // Assert
             Assert.False(result.IsSuccess);
@@ -61,25 +58,23 @@ namespace Arcanic.Result.Tests
         }
 
         [Fact]
-        public void Value_WhenFailure_ShouldThrowInvalidOperationException()
+        public void Value_OnSuccessfulVoidResult_ShouldThrowInvalidOperationException()
         {
             // Arrange
-            var error = Error.Failure("Test.Error", "Test error description");
-            var result = Result.Failure<string>(error);
+            var result = Result.Success();
 
             // Act & Assert
             Assert.Throws<InvalidOperationException>(() => result.Value);
         }
 
         [Fact]
-        public void ImplicitConversion_FromValue_ShouldCreateSuccessfulResult()
+        public void Value_OnTypedFailure_ShouldThrowInvalidOperationException()
         {
-            // Act
-            Result<string> result = "test";
+            // Arrange
+            Result<string> result = Result.Failure(Error.Failure("Test.Error", "Test error description"));
 
-            // Assert
-            Assert.True(result.IsSuccess);
-            Assert.Equal("test", result.Value);
+            // Act & Assert
+            Assert.Throws<InvalidOperationException>(() => result.Value);
         }
 
         [Fact]
@@ -97,7 +92,17 @@ namespace Arcanic.Result.Tests
         }
 
         [Fact]
-        public void Match_WithSuccessResult_ShouldExecuteOnSuccess()
+        public void ImplicitConversion_FromSuccessfulResult_ToTypedResult_ShouldThrow()
+        {
+            // Arrange
+            var success = Result.Success();
+
+            // Act & Assert
+            Assert.Throws<InvalidOperationException>(() => { Result<string> _ = success; });
+        }
+
+        [Fact]
+        public void Match_TypedResult_OnSuccess_ShouldExecuteOnSuccess()
         {
             // Arrange
             var result = Result.Success("test");
@@ -113,11 +118,10 @@ namespace Arcanic.Result.Tests
         }
 
         [Fact]
-        public void Match_WithFailureResult_ShouldExecuteOnFailure()
+        public void Match_TypedResult_OnFailure_ShouldExecuteOnFailure()
         {
             // Arrange
-            var error = Error.Failure("Test.Error", "Test error description");
-            var result = Result.Failure<string>(error);
+            Result<string> result = Result.Failure(Error.Failure("Test.Error", "Test error description"));
             var executed = false;
 
             // Act
@@ -127,6 +131,132 @@ namespace Arcanic.Result.Tests
 
             // Assert
             Assert.True(executed);
+        }
+
+        [Fact]
+        public void Match_TypedResult_OnSuccess_ShouldReturnMappedValue()
+        {
+            // Arrange
+            var result = Result.Success("hello");
+
+            // Act
+            var output = result.Match(
+                value => value.Length,
+                error => -1);
+
+            // Assert
+            Assert.Equal(5, output);
+        }
+
+        [Fact]
+        public void Match_TypedResult_OnFailure_ShouldReturnFallbackValue()
+        {
+            // Arrange
+            Result<string> result = Result.Failure(Error.Failure("Test.Error", "Test error description"));
+
+            // Act
+            var output = result.Match(
+                value => value.Length,
+                err => -1);
+
+            // Assert
+            Assert.Equal(-1, output);
+        }
+
+        [Fact]
+        public void Match_TypedResult_OnFailure_ShouldReceiveCorrectError()
+        {
+            // Arrange
+            var error = Error.NotFound("Item.NotFound", "Item was not found");
+            Result<string> result = Result.Failure(error);
+            Error? capturedError = null;
+
+            // Act
+            result.Match(
+                value => { },
+                err => capturedError = err);
+
+            // Assert
+            Assert.Equal(error, capturedError);
+        }
+
+        [Fact]
+        public void Match_VoidResult_OnSuccess_ShouldExecuteOnSuccess()
+        {
+            // Arrange
+            var result = Result.Success();
+            var executed = false;
+
+            // Act
+            result.Match(
+                () => executed = true,
+                error => executed = false);
+
+            // Assert
+            Assert.True(executed);
+        }
+
+        [Fact]
+        public void Match_VoidResult_OnFailure_ShouldExecuteOnFailure()
+        {
+            // Arrange
+            Result result = Result.Failure(Error.Failure("Test.Error", "Test error description"));
+            var executed = false;
+
+            // Act
+            result.Match(
+                () => executed = false,
+                err => executed = true);
+
+            // Assert
+            Assert.True(executed);
+        }
+
+        [Fact]
+        public void Match_VoidResult_OnSuccess_ShouldReturnMappedValue()
+        {
+            // Arrange
+            var result = Result.Success();
+
+            // Act
+            var output = result.Match(
+                () => "success",
+                error => "failure");
+
+            // Assert
+            Assert.Equal("success", output);
+        }
+
+        [Fact]
+        public void Match_VoidResult_OnFailure_ShouldReturnFallbackValue()
+        {
+            // Arrange
+            Result result = Result.Failure(Error.Failure("Test.Error", "Test error description"));
+
+            // Act
+            var output = result.Match(
+                () => "success",
+                err => "failure");
+
+            // Assert
+            Assert.Equal("failure", output);
+        }
+
+        [Fact]
+        public void Match_VoidResult_OnFailure_ShouldReceiveCorrectError()
+        {
+            // Arrange
+            var error = Error.NotFound("Item.NotFound", "Item was not found");
+            Result result = Result.Failure(error);
+            Error? capturedError = null;
+
+            // Act
+            result.Match(
+                () => { },
+                err => capturedError = err);
+
+            // Assert
+            Assert.Equal(error, capturedError);
         }
     }
 }

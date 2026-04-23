@@ -79,15 +79,74 @@ namespace Arcanic.Result.Tests
         }
 
         [Fact]
-        public void NullValue_ShouldHaveExpectedValues()
+        public void None_ShouldEqualAnotherNoneInstance()
         {
-            // Act
-            var error = Error.NullValue;
+            Assert.Equal(Error.None, Error.None);
+        }
+
+        [Fact]
+        public void Error_SameValues_ShouldBeEqual()
+        {
+            // Arrange
+            var a = Error.Failure("Test.Error", "Test description");
+            var b = Error.Failure("Test.Error", "Test description");
 
             // Assert
-            Assert.Equal("Error.NullValue", error.Code);
-            Assert.Equal("The specified result value is null.", error.Description);
-            Assert.Equal(ErrorType.Failure, error.Type);
+            Assert.Equal(a, b);
+        }
+
+        [Fact]
+        public void Error_DifferentCode_ShouldNotBeEqual()
+        {
+            // Arrange
+            var a = Error.Failure("Error.A", "Same description");
+            var b = Error.Failure("Error.B", "Same description");
+
+            // Assert
+            Assert.NotEqual(a, b);
+        }
+
+        [Fact]
+        public void Unauthorized_ShouldCreateErrorWithUnauthorizedType()
+        {
+            // Arrange
+            const string code = "Test.Unauthorized";
+            const string description = "Test unauthorized description";
+
+            // Act
+            var error = Error.Unauthorized(code, description);
+
+            // Assert
+            Assert.Equal(code, error.Code);
+            Assert.Equal(description, error.Description);
+            Assert.Equal(ErrorType.Unauthorized, error.Type);
+        }
+
+        [Fact]
+        public void Forbidden_ShouldCreateErrorWithForbiddenType()
+        {
+            // Arrange
+            const string code = "Test.Forbidden";
+            const string description = "Test forbidden description";
+
+            // Act
+            var error = Error.Forbidden(code, description);
+
+            // Assert
+            Assert.Equal(code, error.Code);
+            Assert.Equal(description, error.Description);
+            Assert.Equal(ErrorType.Forbidden, error.Type);
+        }
+
+        [Fact]
+        public void Error_DifferentType_ShouldNotBeEqual()
+        {
+            // Arrange
+            var a = Error.Failure("Test.Error", "Same description");
+            var b = Error.Validation("Test.Error", "Same description");
+
+            // Assert
+            Assert.NotEqual(a, b);
         }
     }
 }
