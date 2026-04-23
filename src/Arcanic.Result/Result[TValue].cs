@@ -55,19 +55,9 @@ public class Result<TValue>
         ? _value!
         : throw new InvalidOperationException("The value of a failure result can not be accessed.");
 
-    /// <summary>
-    /// Creates a successful result with a value.
-    /// </summary>
-    /// <param name="value">The value.</param>
-    /// <returns>A successful result with the specified value.</returns>
-    public static Result<TValue> Success(TValue value) => new(value, true, Error.None);
+    internal static Result<TValue> Success(TValue value) => new(value, true, Error.None);
 
-    /// <summary>
-    /// Creates a failed result.
-    /// </summary>
-    /// <param name="error">The error.</param>
-    /// <returns>A failed result with the specified error.</returns>
-    public static Result<TValue> Failure(Error error) => new(default, false, error);
+    internal static Result<TValue> Failure(Error error) => new(default, false, error);
 
     /// <summary>
     /// Matches the result and executes the appropriate function.

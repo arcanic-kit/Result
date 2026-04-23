@@ -38,14 +38,6 @@ public class Result : Result<Result>
     public new static Result Failure(Error error) => new(false, error);
 
     /// <summary>
-    /// Creates a typed failed result.
-    /// </summary>
-    /// <typeparam name="TValue">The value type.</typeparam>
-    /// <param name="error">The error.</param>
-    /// <returns>A typed failed result with the specified error.</returns>
-    public static Result<TValue> Failure<TValue>(Error error) => new(default, false, error);
-
-    /// <summary>
     /// Matches the result and executes the appropriate function.
     /// </summary>
     /// <typeparam name="TOut">The output type.</typeparam>
