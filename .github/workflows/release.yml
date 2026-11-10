@@ -91,14 +91,15 @@ jobs:
           -p:AssemblyVersion=${{ steps.version.outputs.NUMERIC }}.0 \
           -p:FileVersion=${{ steps.version.outputs.NUMERIC }}.0
 
+    # Microsoft Testing Platform mode (enabled in global.json); coverage via coverlet.MTP.
     - name: Run tests
       run: |
-        dotnet test Arcanic.Result.slnx \
+        dotnet test --solution Arcanic.Result.slnx \
           --configuration Release \
           --no-build \
-          --verbosity normal \
-          --collect:"XPlat Code Coverage" \
-          --results-directory ./coverage
+          --results-directory ./coverage \
+          --coverlet \
+          --coverlet-output-format cobertura
 
     # Only src/ projects are packable (see Directory.Build.props). Pack also runs
     # package validation against the previous release.

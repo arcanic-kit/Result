@@ -33,14 +33,15 @@ jobs:
     - name: Build
       run: dotnet build Arcanic.Result.slnx --configuration Release --no-restore
 
+    # Microsoft Testing Platform mode (enabled in global.json); coverage via coverlet.MTP.
     - name: Test
       run: |
-        dotnet test Arcanic.Result.slnx \
+        dotnet test --solution Arcanic.Result.slnx \
           --configuration Release \
           --no-build \
-          --verbosity normal \
-          --collect:"XPlat Code Coverage" \
-          --results-directory ./coverage
+          --results-directory ./coverage \
+          --coverlet \
+          --coverlet-output-format cobertura
 
     - name: Pack (validation)
       run: |
