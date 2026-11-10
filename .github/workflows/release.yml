@@ -30,6 +30,9 @@ env:
 jobs:
   release:
     runs-on: ubuntu-latest
+    # The 'release' environment gates publishing (protection rules, deployment
+    # tag/branch rules) and is matched by the NuGet trusted publishing policy.
+    environment: release
 
     steps:
     - name: Checkout code
