@@ -1,0 +1,31 @@
+version: 2
+
+updates:
+  # NuGet packages, versioned centrally in Directory.Packages.props.
+  # The library itself has no dependencies; these are test and sample packages.
+  - package-ecosystem: nuget
+    directory: /
+    target-branch: develop
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    groups:
+      test:
+        patterns:
+          - "coverlet.*"
+          - "Microsoft.NET.Test.Sdk"
+          - "xunit*"
+      microsoft-extensions:
+        patterns:
+          - "Microsoft.Extensions.*"
+
+  # Action versions used in .github/workflows.
+  - package-ecosystem: github-actions
+    directory: /
+    target-branch: develop
+    schedule:
+      interval: weekly
+    groups:
+      actions:
+        patterns:
+          - "*"
