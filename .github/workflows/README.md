@@ -31,13 +31,20 @@ This directory contains GitHub Actions workflows for the Arcanic.Result project.
 
 ## Setup Instructions
 
-### 1. Configure NuGet API Key
+### 1. Configure NuGet Trusted Publishing
 
-1. Go to [NuGet.org](https://www.nuget.org/) and sign in
-2. Go to your account settings → API Keys
-3. Create a new API key with "Push" permissions for your packages
-4. In your GitHub repository, go to Settings → Secrets and Variables → Actions
-5. Add a new repository secret named `NUGET_API_KEY` with your API key value
+The workflow publishes to NuGet.org with [Trusted Publishing](https://learn.microsoft.com/en-us/nuget/nuget-org/trusted-publishing): the job exchanges a GitHub OIDC token for a temporary API key (valid for 1 hour) via `NuGet/login`. No long-lived API key is stored in the repository.
+
+1. Sign in to [NuGet.org](https://www.nuget.org/), click your username and choose **Trusted Publishing**
+2. Add a policy owned by the account or organization that owns `Arcanic.Result`:
+   - **Repository Owner:** `arcanic-kit`
+   - **Repository:** `Result`
+   - **Workflow File:** `release.yml` (file name only, without `.github/workflows/`)
+   - **Environment:** leave empty (the workflow does not use a GitHub environment)
+3. In your GitHub repository, go to Settings → Secrets and Variables → Actions and add a secret named `NUGET_USER` containing your nuget.org **profile name** (not your email address)
+4. Once a release has published successfully, delete the old `NUGET_API_KEY` secret and revoke that key on NuGet.org
+
+For a private repository, a new policy is only active for 7 days until the first successful publish locks it to the repository; it can be restarted from the policy page.
 
 Note: The workflow also publishes to GitHub Packages using the `GITHUB_TOKEN` (automatically available).
 
@@ -77,7 +84,7 @@ Note: Sample projects, test projects, and benchmarks are excluded from packaging
 - **Build failures:** Check the CI workflow first to ensure your changes build correctly
 - **Package conflicts:** The workflow uses `--skip-duplicate` to avoid conflicts with existing packages
 - **Version conflicts:** Ensure you're using a new version number that hasn't been published before
-- **API key issues:** Verify your NuGet API key has the correct permissions and hasn't expired
+- **NuGet login failures:** Check that the trusted publishing policy is active and matches the repository owner, repository and workflow file exactly, and that `NUGET_USER` is the nuget.org profile name
 
 ## Best Practices
 
@@ -91,6 +98,6 @@ Note: Sample projects, test projects, and benchmarks are excluded from packaging
 
 - Never commit API keys or secrets to the repository
 - Use GitHub repository secrets for sensitive information
-- Regularly rotate your NuGet API keys
-- Review workflow permissions and scope as needed
+- NuGet.org publishing uses Trusted Publishing (OIDC), so there is no NuGet API key to leak or rotate
+- Review workflow permissions and scope as needed (`id-token: write` is required for Trusted Publishing)
 - GitHub Packages publishing uses the automatically provided `GITHUB_TOKEN`
