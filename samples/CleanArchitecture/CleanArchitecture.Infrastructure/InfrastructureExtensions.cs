@@ -12,7 +12,9 @@ public static class InfrastructureExtensions
     {
         builder.AddApplicationServices();
 
-        builder.Services.AddScoped<IProductRepository, ProductRepository>();
+        // Singleton: the repository is an in-memory store, so a scoped lifetime
+        // would discard every write at the end of the request.
+        builder.Services.AddSingleton<IProductRepository, ProductRepository>();
 
         return builder;
     }

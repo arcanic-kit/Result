@@ -2,7 +2,7 @@ name: Build and Test
 
 on:
   pull_request:
-    branches: [ main ]
+    branches: [ main, develop ]
 
 env:
   DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true
@@ -12,19 +12,20 @@ env:
 jobs:
   build:
     runs-on: ubuntu-latest
-    
-    strategy:
-      matrix:
-        dotnet-version: ['8.0.x', '9.0.x', '10.0.x']
-    
+
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
 
-    - name: Setup .NET ${{ matrix.dotnet-version }}
+    # The SDK is pinned by global.json; the 8.0 and 9.0 runtimes are installed
+    # so the test project runs against every target framework.
+    - name: Setup .NET
       uses: actions/setup-dotnet@v4
       with:
-        dotnet-version: ${{ matrix.dotnet-version }}
+        dotnet-version: |
+          8.0.x
+          9.0.x
+          10.0.x
 
     - name: Restore dependencies
       run: dotnet restore Arcanic.Result.slnx
@@ -32,14 +33,15 @@ jobs:
     - name: Build
       run: dotnet build Arcanic.Result.slnx --configuration Release --no-restore
 
+    # Microsoft Testing Platform mode (enabled in global.json); coverage via coverlet.MTP.
     - name: Test
       run: |
-        dotnet test Arcanic.Result.slnx \
+        dotnet test --solution Arcanic.Result.slnx \
           --configuration Release \
           --no-build \
-          --verbosity normal \
-          --collect:"XPlat Code Coverage" \
-          --results-directory ./coverage
+          --results-directory ./coverage \
+          --coverlet \
+          --coverlet-output-format cobertura
 
     - name: Pack (validation)
       run: |
@@ -52,6 +54,6 @@ jobs:
       uses: actions/upload-artifact@v4
       if: always()
       with:
-        name: test-results-${{ matrix.dotnet-version }}
+        name: test-results
         path: ./coverage/**/*
         retention-days: 30

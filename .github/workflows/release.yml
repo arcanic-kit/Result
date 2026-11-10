@@ -3,13 +3,24 @@ name: Release
 on:
   push:
     tags:
-      - 'v*.*.*'  # Trigger on version tags like v1.0.0
+      - 'v*.*.*'  # Trigger on version tags like v10.1.0 or v10.1.0-beta.1
   workflow_dispatch:  # Allow manual triggering
     inputs:
       version:
-        description: 'Version to deploy (e.g., 1.0.0)'
+        description: 'Version to release (e.g., 10.1.0 or 10.1.0-beta.1)'
         required: true
         type: string
+
+# GITHUB_TOKEN needs write access to create the release/tag and push to GitHub Packages.
+# id-token: write lets the job request a GitHub OIDC token for NuGet Trusted Publishing.
+permissions:
+  contents: write
+  packages: write
+  id-token: write
+
+concurrency:
+  group: release
+  cancel-in-progress: false
 
 env:
   DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true
@@ -19,13 +30,15 @@ env:
 jobs:
   release:
     runs-on: ubuntu-latest
-    
+
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
       with:
-        fetch-depth: 0  # Fetch full history for GitVersion
+        fetch-depth: 0  # Full history for the main-branch ancestry check
 
+    # The SDK is pinned by global.json; the 8.0 and 9.0 runtimes are installed
+    # so the tests run against every target framework.
     - name: Setup .NET
       uses: actions/setup-dotnet@v4
       with:
@@ -36,15 +49,37 @@ jobs:
 
     - name: Determine version
       id: version
+      env:
+        # Passed through env (not interpolated into the script) to avoid script injection.
+        INPUT_VERSION: ${{ inputs.version }}
       run: |
-        if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-          VERSION="${{ github.event.inputs.version }}"
+        if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ]; then
+          VERSION="$INPUT_VERSION"
         else
-          # Extract version from tag (remove 'v' prefix)
-          VERSION="${GITHUB_REF#refs/tags/v}"
+          VERSION="${GITHUB_REF_NAME#v}"
         fi
-        echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
-        echo "Package version: $VERSION"
+
+        if ! [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$ ]]; then
+          echo "::error::'$VERSION' is not a valid SemVer version (expected e.g. 10.1.0 or 10.1.0-beta.1)"
+          exit 1
+        fi
+
+        # AssemblyVersion/FileVersion must be numeric: strip any prerelease suffix.
+        NUMERIC="${VERSION%%-*}"
+
+        {
+          echo "VERSION=$VERSION"
+          echo "NUMERIC=$NUMERIC"
+          if [[ "$VERSION" == *-* ]]; then echo "PRERELEASE=true"; else echo "PRERELEASE=false"; fi
+        } >> "$GITHUB_OUTPUT"
+        echo "Package version: $VERSION (assembly $NUMERIC.0)"
+
+    - name: Verify commit is on main
+      run: |
+        if ! git merge-base --is-ancestor "$GITHUB_SHA" origin/main; then
+          echo "::error::Releases must be built from a commit on main ($GITHUB_SHA is not)."
+          exit 1
+        fi
 
     - name: Restore dependencies
       run: dotnet restore Arcanic.Result.slnx
@@ -55,127 +90,36 @@ jobs:
           --configuration Release \
           --no-restore \
           -p:Version=${{ steps.version.outputs.VERSION }} \
-          -p:AssemblyVersion=${{ steps.version.outputs.VERSION }}.0 \
-          -p:FileVersion=${{ steps.version.outputs.VERSION }}.0 \
-          -p:DebugType=portable \
-          -p:DebugSymbols=true
+          -p:AssemblyVersion=${{ steps.version.outputs.NUMERIC }}.0 \
+          -p:FileVersion=${{ steps.version.outputs.NUMERIC }}.0
 
+    # Microsoft Testing Platform mode (enabled in global.json); coverage via coverlet.MTP.
     - name: Run tests
       run: |
-        dotnet test Arcanic.Result.slnx \
+        dotnet test --solution Arcanic.Result.slnx \
           --configuration Release \
           --no-build \
-          --verbosity normal \
-          --collect:"XPlat Code Coverage" \
-          --results-directory ./coverage
+          --results-directory ./coverage \
+          --coverlet \
+          --coverlet-output-format cobertura
 
-    - name: Clean packages directory
+    # Only src/ projects are packable (see Directory.Build.props). Pack also runs
+    # package validation against the previous release.
+    - name: Create packages
       run: |
         rm -rf ./packages
-        mkdir -p ./packages
+        dotnet pack Arcanic.Result.slnx \
+          --configuration Release \
+          --no-build \
+          --output ./packages \
+          -p:Version=${{ steps.version.outputs.VERSION }}
 
-    - name: Create packages 
+    - name: List package contents
       run: |
-        # Pack only the src projects, excluding samples and test projects
-        for project in src/*/*.csproj; do
-          if [ -f "$project" ]; then
-            # Skip if project path contains "sample" or "test" (case insensitive)
-            if [[ ! "$project" =~ [Ss]ample ]] && [[ ! "$project" =~ [Tt]est ]]; then
-              echo "Packing: $project"
-              dotnet pack "$project" \
-                --configuration Release \
-                --no-build \
-                --output ./packages \
-                -p:Version=${{ steps.version.outputs.VERSION }} \
-                -p:AssemblyVersion=${{ steps.version.outputs.VERSION }}.0 \
-                -p:FileVersion=${{ steps.version.outputs.VERSION }}.0 \
-                -p:IncludeSymbols=true \
-                -p:SymbolPackageFormat=snupkg \
-                -p:DebugType=portable \
-                -p:DebugSymbols=true
-            else
-              echo "Skipping sample/test project: $project"
-            fi
-          fi
+        for pkg in ./packages/*.nupkg ./packages/*.snupkg; do
+          echo "== $(basename "$pkg")"
+          unzip -l "$pkg" | grep -E '\.(dll|pdb)$' || echo "   (no dll/pdb)"
         done
-
-    - name: List and verify packages
-      run: |
-        echo "Generated packages:"
-        ls -la ./packages/
-        echo ""
-        echo "Package details:"
-        for pkg in ./packages/*.nupkg; do
-          if [ -f "$pkg" ]; then
-            echo "Package: $(basename $pkg)"
-            unzip -l "$pkg" | grep -E '\.(dll|pdb)$' || echo "No DLL/PDB files found"
-            echo "---"
-          fi
-        done
-
-    - name: Verify package content
-      run: |
-        echo "Checking for symbol package issues..."
-        for snupkg in ./packages/*.snupkg; do
-          if [ -f "$snupkg" ]; then
-            pkg_name=$(basename "$snupkg" .snupkg).nupkg
-            if [ -f "./packages/$pkg_name" ]; then
-              echo "Checking symbol package: $(basename $snupkg)"
-              # List contents of symbol package
-              echo "PDB files in symbol package:"
-              unzip -l "$snupkg" | grep '\.pdb$' || echo "No PDB files in symbol package"
-              # List DLLs in main package
-              echo "DLL files in main package:"
-              unzip -l "./packages/$pkg_name" | grep '\.dll$' || echo "No DLL files in main package"
-              echo "---"
-            fi
-          fi
-        done
-
-    - name: Publish to NuGet
-      run: |
-        echo "Pushing main packages..."
-        for pkg in ./packages/*.nupkg; do
-          if [ -f "$pkg" ]; then
-            echo "Pushing: $(basename $pkg)"
-            dotnet nuget push "$pkg" \
-              --source https://api.nuget.org/v3/index.json \
-              --api-key ${{ secrets.NUGET_API_KEY }} \
-              --skip-duplicate \
-              --timeout 300
-          fi
-        done
-
-    - name: Publish to GitHub Packages
-      run: |
-        echo "Pushing main packages..."
-        for pkg in ./packages/*.nupkg; do
-          if [ -f "$pkg" ]; then
-            echo "Pushing: $(basename $pkg)"
-            dotnet nuget push "$pkg" \
-              --source https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json \
-              --api-key ${{ secrets.GITHUB_TOKEN }} \
-              --skip-duplicate \
-              --timeout 300
-          fi
-        done
-
-    - name: Create GitHub Release
-      uses: actions/create-release@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        tag_name: v${{ steps.version.outputs.VERSION }}
-        release_name: Release ${{ steps.version.outputs.VERSION }}
-        body: |
-          ## Changes in ${{ steps.version.outputs.VERSION }}
-          
-          ### NuGet Packages Published:
-          - Arcanic.Result v${{ steps.version.outputs.VERSION }}
-          
-          See the [packages on NuGet.org](https://www.nuget.org/packages?q=Arcanic.Result)
-        draft: false
-        prerelease: false
 
     - name: Upload packages as artifacts
       uses: actions/upload-artifact@v4
@@ -185,3 +129,57 @@ jobs:
           ./packages/*.nupkg
           ./packages/*.snupkg
         retention-days: 90
+
+    - name: Publish to GitHub Packages
+      run: |
+        dotnet nuget push "./packages/*.nupkg" \
+          --source "https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json" \
+          --api-key "${{ secrets.GITHUB_TOKEN }}" \
+          --skip-duplicate
+
+    - name: Create GitHub Release
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        VERSION: ${{ steps.version.outputs.VERSION }}
+        PRERELEASE: ${{ steps.version.outputs.PRERELEASE }}
+      run: |
+        TAG="v$VERSION"
+        NOTES=".github/release-notes/$TAG.md"
+
+        args=(--title "Release $VERSION" --target "$GITHUB_SHA")
+        if [ -f "$NOTES" ]; then
+          args+=(--notes-file "$NOTES")
+        else
+          echo "No $NOTES found; generating notes from merged PRs."
+          args+=(--generate-notes)
+        fi
+        if [ "$PRERELEASE" = "true" ]; then
+          args+=(--prerelease)
+        fi
+
+        if gh release view "$TAG" > /dev/null 2>&1; then
+          echo "Release $TAG already exists; skipping."
+        else
+          gh release create "$TAG" "${args[@]}" ./packages/*.nupkg ./packages/*.snupkg
+        fi
+
+    # NuGet Trusted Publishing: exchange the GitHub OIDC token for a short-lived
+    # (1 hour) NuGet API key, right before pushing. No long-lived API key is stored.
+    # Requires a trusted publishing policy on nuget.org for this repository and
+    # workflow file (release.yml), and the NUGET_USER secret (nuget.org profile name).
+    - name: NuGet login (OIDC)
+      id: nuget-login
+      uses: NuGet/login@v1
+      with:
+        user: ${{ secrets.NUGET_USER }}
+
+    # NuGet.org last: a published version can be unlisted but never replaced.
+    - name: Publish to NuGet.org
+      env:
+        NUGET_API_KEY: ${{ steps.nuget-login.outputs.NUGET_API_KEY }}
+      run: |
+        dotnet nuget push "./packages/*.nupkg" \
+          --source https://api.nuget.org/v3/index.json \
+          --api-key "$NUGET_API_KEY" \
+          --skip-duplicate \
+          --timeout 300

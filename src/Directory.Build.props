@@ -1,8 +1,11 @@
 <Project>
 
+  <!-- Repository-wide settings (nullable, warnings as errors, CI determinism, ...). -->
+  <Import Project="$([MSBuild]::GetPathOfFileAbove('Directory.Build.props', '$(MSBuildThisFileDirectory)../'))" />
+
   <PropertyGroup>
-	<TargetFrameworks>net8.0;net9.0;net10.0</TargetFrameworks>
-	<ImplicitUsings>enable</ImplicitUsings>
+    <TargetFrameworks>net8.0;net9.0;net10.0</TargetFrameworks>
+    <IsPackable>true</IsPackable>
   </PropertyGroup>
 
   <ItemGroup>
@@ -10,13 +13,11 @@
   </ItemGroup>
 
   <PropertyGroup>
-	<Nullable>enable</Nullable>
-	  
     <!-- Common Package Information -->
     <Authors>Intello Solutions</Authors>
     <Company>Intello Solutions</Company>
-    <Copyright>Intello Solutions 2025</Copyright>
-    
+    <Copyright>Copyright © Intello Solutions $([System.DateTime]::UtcNow.Year)</Copyright>
+
     <!-- Repository Information -->
     <RepositoryType>git</RepositoryType>
     <RepositoryUrl>https://github.com/arcanic-kit/Result</RepositoryUrl>
@@ -25,23 +26,17 @@
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageIcon>logo.png</PackageIcon>
-    
-    <!-- Build Configuration -->
-    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+
+    <!-- Packaging (packages are produced by an explicit `dotnet pack`, which also runs package validation) -->
     <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
     <IncludeSymbols>true</IncludeSymbols>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
-    
-    <!-- Language and Framework -->
-    <LangVersion>latest</LangVersion>
-    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
-    <WarningsNotAsErrors>NU1701;CS0168;CS1574</WarningsNotAsErrors>
   </PropertyGroup>
 
   <!-- Include logo and readme in all packages -->
   <ItemGroup>
-	  <None Include="$(MSBuildThisFileDirectory)\..\README.md" Pack="true" PackagePath="\" />
+    <None Include="$(MSBuildThisFileDirectory)\..\README.md" Pack="true" PackagePath="\" />
     <None Include="$(MSBuildThisFileDirectory)\..\assets\images\logo.png" Pack="true" PackagePath="\" Condition="Exists('$(MSBuildThisFileDirectory)\..\assets\images\logo.png')" />
   </ItemGroup>
 

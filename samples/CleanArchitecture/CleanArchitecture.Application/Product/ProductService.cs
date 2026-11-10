@@ -13,49 +13,26 @@ public class ProductService : IProductService
         _productRepository = productRepository;
     }
 
-    public async Task<Result<ProductDto>> GetByIdAsync(int id)
-    {
-        var product = await _productRepository.GetByIdAsync(id);
-
-        if (product == null)
-        {
-            return Result.Failure(Error.NotFound("Product.NotFound", $"Product with ID {id} was not found."));
-        }
-
-        var productDto = new ProductDto
-        {
-            Id = product.Id,
-            Name = product.Name,
-            Price = product.Price
-        };
-
-        return Result.Success(productDto);
-    }
+    public Task<Result<ProductDto>> GetByIdAsync(int id) =>
+        FindAsync(id).Map(ToDto);
 
     public async Task<Result<IEnumerable<ProductDto>>> GetAllAsync()
     {
         var products = await _productRepository.GetAllAsync();
 
-        var productDtos = products.Select(product => new ProductDto
-        {
-            Id = product.Id,
-            Name = product.Name,
-            Price = product.Price
-        });
-
-        return Result.Success(productDtos);
+        // C# does not apply user-defined conversions from interface types such as
+        // IEnumerable<T>, so this case uses Result.Success explicitly.
+        return Result.Success(products.Select(ToDto));
     }
 
     public async Task<Result<int>> CreateAsync(string name, string? description, decimal price)
     {
-        if (string.IsNullOrWhiteSpace(name))
-        {
-            return Result.Failure(Error.Validation("Product.Name.Empty", "Product name cannot be empty."));
-        }
+        // Report every validation problem at once instead of stopping at the first.
+        var validation = Result.Combine(ValidateName(name), ValidatePrice(price));
 
-        if (price < 0)
+        if (validation.IsFailure)
         {
-            return Result.Failure(Error.Validation("Product.Price.Negative", "Product price cannot be negative."));
+            return Result.Failure<int>(validation.Errors);
         }
 
         var product = new Domain.Products.Product(0, name, price)
@@ -64,28 +41,41 @@ public class ProductService : IProductService
         };
 
         var createdProduct = await _productRepository.AddAsync(product);
-        return Result.Success(createdProduct.Id);
+        return createdProduct.Id;
     }
 
     public async Task<Result> UpdatePriceAsync(int id, decimal price)
     {
-        if (price < 0)
+        var validation = ValidatePrice(price);
+
+        if (validation.IsFailure)
         {
-            return Result.Failure(
-                Error.Validation("Product.Price.Negative", "Product price cannot be negative."));
+            return validation;
         }
 
-        var product = await _productRepository.GetByIdAsync(id);
-
-        if (product == null)
+        return await FindAsync(id).BindAsync(async product =>
         {
-            return Result.Failure(
-                Error.NotFound("Product.NotFound", $"Product with ID {id} was not found."));
-        }
-
-        product.UpdatePrice(price);
-        await _productRepository.UpdateAsync(product);
-
-        return Result.Success();
+            product.UpdatePrice(price);
+            await _productRepository.UpdateAsync(product);
+            return Result.Success();
+        });
     }
+
+    private async Task<Result<Domain.Products.Product>> FindAsync(int id) =>
+        await _productRepository.GetByIdAsync(id) is { } product
+            ? product
+            : ProductErrors.NotFound(id);
+
+    private static Result ValidateName(string name) =>
+        string.IsNullOrWhiteSpace(name) ? ProductErrors.NameEmpty : Result.Success();
+
+    private static Result ValidatePrice(decimal price) =>
+        price < 0 ? ProductErrors.PriceNegative : Result.Success();
+
+    private static ProductDto ToDto(Domain.Products.Product product) => new()
+    {
+        Id = product.Id,
+        Name = product.Name,
+        Price = product.Price
+    };
 }
