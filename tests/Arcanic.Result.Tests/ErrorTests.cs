@@ -2,68 +2,39 @@ namespace Arcanic.Result.Tests
 {
     public class ErrorTests
     {
-        [Fact]
-        public void Failure_ShouldCreateErrorWithFailureType()
+        public static TheoryData<ErrorType, Func<string, string, Error>> Factories => new()
+        {
+            { ErrorType.Failure, Error.Failure },
+            { ErrorType.Validation, Error.Validation },
+            { ErrorType.Conflict, Error.Conflict },
+            { ErrorType.NotFound, Error.NotFound },
+            { ErrorType.Unauthorized, Error.Unauthorized },
+            { ErrorType.Forbidden, Error.Forbidden },
+        };
+
+        [Theory]
+        [MemberData(nameof(Factories))]
+        public void Factory_ShouldCreateErrorWithMatchingType(ErrorType expectedType, Func<string, string, Error> factory)
         {
             // Arrange
-            const string code = "Test.Failure";
-            const string description = "Test failure description";
+            var code = $"Test.{expectedType}";
+            var description = $"Test {expectedType} description";
 
             // Act
-            var error = Error.Failure(code, description);
+            var error = factory(code, description);
 
             // Assert
             Assert.Equal(code, error.Code);
             Assert.Equal(description, error.Description);
-            Assert.Equal(ErrorType.Failure, error.Type);
+            Assert.Equal(expectedType, error.Type);
         }
 
         [Fact]
-        public void Validation_ShouldCreateErrorWithValidationType()
+        public void Factories_ShouldCoverEveryErrorType()
         {
-            // Arrange
-            const string code = "Test.Validation";
-            const string description = "Test validation description";
+            var covered = Factories.Select(row => (ErrorType)row[0]).ToHashSet();
 
-            // Act
-            var error = Error.Validation(code, description);
-
-            // Assert
-            Assert.Equal(code, error.Code);
-            Assert.Equal(description, error.Description);
-            Assert.Equal(ErrorType.Validation, error.Type);
-        }
-
-        [Fact]
-        public void Conflict_ShouldCreateErrorWithConflictType()
-        {
-            // Arrange
-            const string code = "Test.Conflict";
-            const string description = "Test conflict description";
-
-            // Act
-            var error = Error.Conflict(code, description);
-
-            // Assert
-            Assert.Equal(code, error.Code);
-            Assert.Equal(description, error.Description);
-            Assert.Equal(ErrorType.Conflict, error.Type);
-        }
-
-        [Fact]
-        public void NotFound_ShouldCreateErrorWithNotFoundType()
-        {
-            // Arrange
-            const string code = "Test.NotFound";
-            const string description = "Test not found description";
-
-            // Act
-            var error = Error.NotFound(code, description);
-
-            // Assert
-            Assert.Equal(code, error.Code);
-            Assert.Equal(description, error.Description);
-            Assert.Equal(ErrorType.NotFound, error.Type);
+            Assert.Equal(Enum.GetValues<ErrorType>().ToHashSet(), covered);
         }
 
         [Fact]
@@ -79,9 +50,11 @@ namespace Arcanic.Result.Tests
         }
 
         [Fact]
-        public void None_ShouldEqualAnotherNoneInstance()
+        public void None_ShouldAlwaysBeTheSameInstance()
         {
-            Assert.Equal(Error.None, Error.None);
+            Assert.Same(Error.None, Error.None);
+            Assert.Same(Error.None, Result.Success().Error);
+            Assert.Same(Error.None, Result.Success(1).Error);
         }
 
         [Fact]
@@ -93,6 +66,7 @@ namespace Arcanic.Result.Tests
 
             // Assert
             Assert.Equal(a, b);
+            Assert.Equal(a.GetHashCode(), b.GetHashCode());
         }
 
         [Fact]
@@ -104,38 +78,6 @@ namespace Arcanic.Result.Tests
 
             // Assert
             Assert.NotEqual(a, b);
-        }
-
-        [Fact]
-        public void Unauthorized_ShouldCreateErrorWithUnauthorizedType()
-        {
-            // Arrange
-            const string code = "Test.Unauthorized";
-            const string description = "Test unauthorized description";
-
-            // Act
-            var error = Error.Unauthorized(code, description);
-
-            // Assert
-            Assert.Equal(code, error.Code);
-            Assert.Equal(description, error.Description);
-            Assert.Equal(ErrorType.Unauthorized, error.Type);
-        }
-
-        [Fact]
-        public void Forbidden_ShouldCreateErrorWithForbiddenType()
-        {
-            // Arrange
-            const string code = "Test.Forbidden";
-            const string description = "Test forbidden description";
-
-            // Act
-            var error = Error.Forbidden(code, description);
-
-            // Assert
-            Assert.Equal(code, error.Code);
-            Assert.Equal(description, error.Description);
-            Assert.Equal(ErrorType.Forbidden, error.Type);
         }
 
         [Fact]
