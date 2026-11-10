@@ -58,4 +58,11 @@ Demonstrates the intended usage pattern:
 
 ### Multi-targeting
 
-The library targets .NET 8, 9, and 10 simultaneously (configured in `src/Directory.Build.props`, which applies only to `src/`). The test project multi-targets the same three frameworks, so CI tests all three; samples target .NET 10 only. The SDK is pinned via `global.json`. Nullable reference types and implicit usings are enabled in every project.
+The library targets .NET 8, 9, and 10 simultaneously (configured in `src/Directory.Build.props`). The test project multi-targets the same three frameworks, so CI tests all three; samples target .NET 10 only. The SDK is pinned via `global.json`.
+
+### Build configuration
+
+- **`Directory.Build.props`** (root) — shared by all projects: nullable, implicit usings, `TreatWarningsAsErrors`, `IsPackable=false` by default, `ContinuousIntegrationBuild` on GitHub Actions
+- **`src/Directory.Build.props`** — imports the root file; adds target frameworks, `IsPackable=true` and NuGet metadata
+- **`Directory.Packages.props`** (root) — central package management; add versions here, not in `.csproj` files
+- **Package validation** runs on `dotnet pack` against `PackageValidationBaselineVersion` in `Arcanic.Result.csproj`. After each release, bump `VersionPrefix` to the next version and the baseline to the version just shipped

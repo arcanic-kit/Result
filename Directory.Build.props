@@ -1,0 +1,23 @@
+<Project>
+
+  <!-- Settings shared by every project in the repository (src, tests, samples).
+       Packaging metadata lives in src/Directory.Build.props, which imports this file. -->
+
+  <PropertyGroup>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <LangVersion>latest</LangVersion>
+
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+
+    <!-- Only projects under src/ are shipped; they opt back in. -->
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <!-- Deterministic, path-normalized builds on CI (required for reproducible SourceLink'd packages). -->
+  <PropertyGroup Condition="'$(GITHUB_ACTIONS)' == 'true'">
+    <ContinuousIntegrationBuild>true</ContinuousIntegrationBuild>
+  </PropertyGroup>
+
+</Project>
