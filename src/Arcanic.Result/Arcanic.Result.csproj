@@ -9,7 +9,7 @@
   <!-- Version used by local and PR builds; the release workflow overrides it with the tag version.
        After each release: set VersionPrefix to the next version and the baseline to the one just shipped. -->
   <PropertyGroup>
-    <VersionPrefix>11.0.0</VersionPrefix>
+    <VersionPrefix>10.1.0</VersionPrefix>
   </PropertyGroup>
 
   <!-- Fail pack on breaking API changes against the last published version,

@@ -156,9 +156,13 @@ public Task<IActionResult> Get(int id) =>
 
 See [`samples/CleanArchitecture`](samples/CleanArchitecture) for a complete Web API that maps every error into RFC 9457 problem details.
 
-## Upgrading to v11
+## Versioning
 
-v11 makes `Result<T>` derive from `Result`. The [v11.0.0 release notes](.github/release-notes/v11.0.0.md) list the breaking changes and how to migrate; the most common one is replacing `Result.Failure(error)` in methods returning `Result<T>` with `return error;` or `Result.Failure<T>(error)`.
+The major version follows the .NET major version (10.x for .NET 10), so a minor release can contain breaking changes. Check the release notes before upgrading.
+
+### Upgrading from 10.0 to 10.1
+
+10.1.0 makes `Result<T>` derive from `Result`. The [10.1.0 release notes](.github/release-notes/v10.1.0.md) list the breaking changes and how to migrate; the most common one is replacing `Result.Failure(error)` in methods returning `Result<T>` with `return error;` or `Result.Failure<T>(error)`.
 
 ## License
 

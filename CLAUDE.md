@@ -55,7 +55,9 @@ There is no conversion from `Result` to `Result<T>` (C# forbids user-defined con
 
 ### Breaking changes
 
-`src/Arcanic.Result/CompatibilitySuppressions.xml` lists the breaks accepted for the current major version against `PackageValidationBaselineVersion`. Only regenerate it (`dotnet pack -p:ApiCompatGenerateSuppressionFile=true`) for an intentional major-version break, and delete it when the baseline moves to a version that already contains those breaks.
+The package's major version follows the .NET major version (10.x for .NET 10), not SemVer, so a minor release may contain breaking changes; they must be listed in that version's release notes (`.github/release-notes/v<version>.md`) with migration guidance.
+
+`src/Arcanic.Result/CompatibilitySuppressions.xml` lists the breaks accepted for the upcoming release against `PackageValidationBaselineVersion`. Only regenerate it (`dotnet pack -p:ApiCompatGenerateSuppressionFile=true`) for an intentional break, and delete it when the baseline moves to a version that already contains those breaks.
 
 ### Error code naming convention
 
