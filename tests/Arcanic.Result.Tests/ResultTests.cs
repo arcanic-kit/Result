@@ -68,6 +68,26 @@ namespace Arcanic.Result.Tests
         }
 
         [Fact]
+        public void Value_OnSuccessfulVoidResult_ThroughBaseReference_ShouldThrowInvalidOperationException()
+        {
+            // Arrange
+            Result<Result> result = Result.Success();
+
+            // Act & Assert
+            Assert.Throws<InvalidOperationException>(() => result.Value);
+        }
+
+        [Fact]
+        public void ValueMatch_OnSuccessfulVoidResult_ThroughBaseReference_ShouldThrowInsteadOfPassingNull()
+        {
+            // Arrange
+            Result<Result> result = Result.Success();
+
+            // Act & Assert
+            Assert.Throws<InvalidOperationException>(() => result.Match(value => value, error => null!));
+        }
+
+        [Fact]
         public void Value_OnTypedFailure_ShouldThrowInvalidOperationException()
         {
             // Arrange

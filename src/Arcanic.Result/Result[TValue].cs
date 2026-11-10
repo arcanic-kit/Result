@@ -58,7 +58,7 @@ public class Result<TValue>
     /// Gets the value if the result is successful.
     /// </summary>
     /// <exception cref="InvalidOperationException">Thrown when trying to access the value of a failed result.</exception>
-    public TValue Value => IsSuccess
+    public virtual TValue Value => IsSuccess
         ? _value!
         : throw new InvalidOperationException("The value of a failure result can not be accessed.");
 

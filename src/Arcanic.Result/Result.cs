@@ -1,3 +1,5 @@
+using System.ComponentModel;
+
 namespace Arcanic.Result;
 
 /// <summary>
@@ -19,9 +21,19 @@ public class Result : Result<Result>
     /// <summary>
     /// This property is not supported on a void result. Use <see cref="Result{TValue}"/> for operations that return a value.
     /// </summary>
+    /// <remarks>
+    /// Overrides (rather than hides) the base property so it also throws when accessed
+    /// through a <see cref="Result{TValue}"/> reference.
+    /// </remarks>
     /// <exception cref="InvalidOperationException">Always thrown.</exception>
-    public new Result Value =>
-        throw new InvalidOperationException("Result does not carry a value. Use Result<TValue> for operations that return a value.");
+    public override Result Value =>
+        throw new InvalidOperationException(NoValueMessage);
+
+    private const string NoValueMessage =
+        "Result does not carry a value. Use Result<TValue> for operations that return a value.";
+
+    private const string ValueMatchMessage =
+        "Result does not carry a value; use the Match overload whose onSuccess takes no parameters.";
 
     /// <summary>
     /// Creates a successful result.
@@ -70,6 +82,26 @@ public class Result : Result<Result>
             onFailure(Error);
         }
     }
+
+    /// <summary>
+    /// Not supported: hides the inherited value-based overload, which would otherwise compile
+    /// and pass a meaningless value to <paramref name="onSuccess"/>.
+    /// </summary>
+    /// <exception cref="NotSupportedException">Always thrown.</exception>
+    [Obsolete(ValueMatchMessage, error: true)]
+    [EditorBrowsable(EditorBrowsableState.Never)]
+    public new TOut Match<TOut>(Func<Result, TOut> onSuccess, Func<Error, TOut> onFailure) =>
+        throw new NotSupportedException(ValueMatchMessage);
+
+    /// <summary>
+    /// Not supported: hides the inherited value-based overload, which would otherwise compile
+    /// and pass a meaningless value to <paramref name="onSuccess"/>.
+    /// </summary>
+    /// <exception cref="NotSupportedException">Always thrown.</exception>
+    [Obsolete(ValueMatchMessage, error: true)]
+    [EditorBrowsable(EditorBrowsableState.Never)]
+    public new void Match(Action<Result> onSuccess, Action<Error> onFailure) =>
+        throw new NotSupportedException(ValueMatchMessage);
 
     /// <summary>
     /// Implicitly converts an error to a failed result.
