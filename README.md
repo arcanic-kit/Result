@@ -6,11 +6,11 @@
 
 **Explicit, type-safe error handling for .NET — no exceptions for business failures.**
 
-[![NuGet](https://img.shields.io/nuget/v/Arcanic.Result?logo=nuget)](https://www.nuget.org/packages/Arcanic.Result)
-[![Downloads](https://img.shields.io/nuget/dt/Arcanic.Result)](https://www.nuget.org/packages/Arcanic.Result)
-[![Build](https://img.shields.io/github/actions/workflow/status/arcanic-kit/Result/build-and-test.yml?logo=github)](https://github.com/arcanic-kit/Result/actions/workflows/build-and-test.yml)
-[![.NET](https://img.shields.io/badge/.NET-8%20%7C%209%20%7C%2010-512BD4?logo=dotnet)](https://dotnet.microsoft.com)
-[![License: MIT](https://img.shields.io/badge/license-MIT-green)](https://github.com/arcanic-kit/Result/blob/main/LICENSE)
+[![NuGet](https://img.shields.io/nuget/v/Arcanic.Result?style=for-the-badge&logo=nuget&logoColor=white&label=NuGet&color=004880)](https://www.nuget.org/packages/Arcanic.Result)
+[![Downloads](https://img.shields.io/nuget/dt/Arcanic.Result?style=for-the-badge&logo=nuget&logoColor=white&label=Downloads&color=004880)](https://www.nuget.org/packages/Arcanic.Result)
+[![Build](https://img.shields.io/github/actions/workflow/status/arcanic-kit/Result/build-and-test.yml?style=for-the-badge&logo=githubactions&logoColor=white&label=Build)](https://github.com/arcanic-kit/Result/actions/workflows/build-and-test.yml)
+[![.NET](https://img.shields.io/badge/.NET-8%20%7C%209%20%7C%2010-512BD4?style=for-the-badge&logo=dotnet&logoColor=white)](https://dotnet.microsoft.com)
+[![License](https://img.shields.io/badge/License-MIT-22C55E?style=for-the-badge)](https://github.com/arcanic-kit/Result/blob/main/LICENSE)
 
 </div>
 
