@@ -13,19 +13,8 @@ public class ProductService : IProductService
         _productRepository = productRepository;
     }
 
-    public async Task<Result<ProductDto>> GetByIdAsync(int id)
-    {
-        var product = await _productRepository.GetByIdAsync(id);
-
-        if (product is null)
-        {
-            // Error converts implicitly to a failed Result<ProductDto>
-            return ProductErrors.NotFound(id);
-        }
-
-        // ProductDto converts implicitly to a successful Result<ProductDto>
-        return ToDto(product);
-    }
+    public Task<Result<ProductDto>> GetByIdAsync(int id) =>
+        FindAsync(id).Map(ToDto);
 
     public async Task<Result<IEnumerable<ProductDto>>> GetAllAsync()
     {
@@ -38,14 +27,12 @@ public class ProductService : IProductService
 
     public async Task<Result<int>> CreateAsync(string name, string? description, decimal price)
     {
-        if (string.IsNullOrWhiteSpace(name))
-        {
-            return ProductErrors.NameEmpty;
-        }
+        // Report every validation problem at once instead of stopping at the first.
+        var validation = Result.Combine(ValidateName(name), ValidatePrice(price));
 
-        if (price < 0)
+        if (validation.IsFailure)
         {
-            return ProductErrors.PriceNegative;
+            return Result.Failure<int>(validation.Errors);
         }
 
         var product = new Domain.Products.Product(0, name, price)
@@ -59,23 +46,31 @@ public class ProductService : IProductService
 
     public async Task<Result> UpdatePriceAsync(int id, decimal price)
     {
-        if (price < 0)
+        var validation = ValidatePrice(price);
+
+        if (validation.IsFailure)
         {
-            return ProductErrors.PriceNegative;
+            return validation;
         }
 
-        var product = await _productRepository.GetByIdAsync(id);
-
-        if (product is null)
+        return await FindAsync(id).BindAsync(async product =>
         {
-            return ProductErrors.NotFound(id);
-        }
-
-        product.UpdatePrice(price);
-        await _productRepository.UpdateAsync(product);
-
-        return Result.Success();
+            product.UpdatePrice(price);
+            await _productRepository.UpdateAsync(product);
+            return Result.Success();
+        });
     }
+
+    private async Task<Result<Domain.Products.Product>> FindAsync(int id) =>
+        await _productRepository.GetByIdAsync(id) is { } product
+            ? product
+            : ProductErrors.NotFound(id);
+
+    private static Result ValidateName(string name) =>
+        string.IsNullOrWhiteSpace(name) ? ProductErrors.NameEmpty : Result.Success();
+
+    private static Result ValidatePrice(decimal price) =>
+        price < 0 ? ProductErrors.PriceNegative : Result.Success();
 
     private static ProductDto ToDto(Domain.Products.Product product) => new()
     {

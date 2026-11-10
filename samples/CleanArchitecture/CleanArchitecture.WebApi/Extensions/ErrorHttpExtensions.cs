@@ -22,19 +22,33 @@ public static class ErrorHttpExtensions
     };
 
     /// <summary>
-    /// Converts an error into an RFC 9457 problem details response, carrying the error code
-    /// as a <c>code</c> extension so clients can branch on it.
+    /// Converts a failed result into an RFC 9457 problem details response. The status comes from
+    /// the first error; every error is listed in an <c>errors</c> extension so clients see all of them.
     /// </summary>
-    public static IActionResult ToProblem(this ControllerBase controller, Error error)
+    /// <remarks>
+    /// Takes the whole result rather than an <see cref="Error"/>, because <c>Match</c>'s
+    /// <c>onFailure</c> only receives the first error.
+    /// </remarks>
+    public static IActionResult ToProblem(this ControllerBase controller, Result failure)
     {
+        if (failure.IsSuccess)
+        {
+            throw new ArgumentException("Cannot create a problem response from a successful result.", nameof(failure));
+        }
+
+        var first = failure.Error;
+
         var result = controller.Problem(
-            statusCode: error.Type.ToStatusCode(),
-            title: error.Type.ToString(),
-            detail: error.Description);
+            statusCode: first.Type.ToStatusCode(),
+            title: first.Type.ToString(),
+            detail: failure.Errors.Count == 1 ? first.Description : "One or more errors occurred.");
 
         if (result.Value is ProblemDetails problem)
         {
-            problem.Extensions["code"] = error.Code;
+            problem.Extensions["code"] = first.Code;
+            problem.Extensions["errors"] = failure.Errors
+                .Select(error => new { error.Code, error.Description })
+                .ToArray();
         }
 
         return result;

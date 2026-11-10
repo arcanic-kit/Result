@@ -36,6 +36,9 @@ This is a **Railway-Oriented Programming** library for .NET 8/9/10 that provides
 - **`Result<TValue>`** — derives from `Result`, adding `Value` (throws if accessed on failure)
 - **Multiple errors** — a failure carries one or more errors: `Errors` lists all of them (empty on success), `Error` is the first (`Error.None` on success). Create with `Result.Failure(IEnumerable<Error>)` / `Result.Failure<T>(IEnumerable<Error>)`; `Result.Combine(...)` merges results, collecting every error. `Match`'s `onFailure` receives the first error
 
+- **`ResultExtensions`** — railway combinators `Map`, `Bind`, `Ensure`, `Tap`, `TapError`; each runs only on success and otherwise propagates the failure with all its errors (`Result.Failure<T>(result.Errors)`)
+- **`ResultAsyncExtensions`** — same names on `Task<Result<T>>`/`Task<Result>` take sync functions; `...Async` names take async functions. Library awaits use `ConfigureAwait(false)`
+
 ### Implicit conversion convention
 
 ```csharp
@@ -58,8 +61,8 @@ Dot notation for domain-scoped codes: `"Product.NotFound"`, `"User.EmailConflict
 ### Clean Architecture sample (`samples/CleanArchitecture/`)
 
 Demonstrates the intended usage pattern:
-- **Application layer**: services return `Result<T>` — no exceptions thrown for business failures. Errors are defined once per feature in a static class (`ProductErrors`) and returned via implicit conversion
-- **Web API layer**: controllers call `result.Match(...)`; failures go through `this.ToProblem(error)` (`WebApi/Extensions/ErrorHttpExtensions.cs`), the single place that maps `ErrorType` → HTTP status and emits problem details with the error `code`
+- **Application layer**: services return `Result<T>` — no exceptions thrown for business failures. Errors are defined once per feature in a static class (`ProductErrors`) and returned via implicit conversion. Validation uses `Result.Combine` to report every error; lookups chain with `Map`/`BindAsync`
+- **Web API layer**: controllers call `result.Match(...)`; failures go through `this.ToProblem(result)` (`WebApi/Extensions/ErrorHttpExtensions.cs`), the single place that maps `ErrorType` → HTTP status and emits problem details with `code` and every error in `errors`. It takes the result, not an `Error`, because `Match`'s `onFailure` only receives the first error
 
 ### Multi-targeting
 

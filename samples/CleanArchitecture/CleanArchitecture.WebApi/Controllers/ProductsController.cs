@@ -17,7 +17,7 @@ namespace CleanArchitecture.WebApi.Controllers
 
             return result.Match(
                 onSuccess: products => Ok(products.Select(ProductDetails.From).ToList()),
-                onFailure: error => this.ToProblem(error));
+                onFailure: _ => this.ToProblem(result));
         }
 
         [HttpGet("{id}")]
@@ -27,7 +27,7 @@ namespace CleanArchitecture.WebApi.Controllers
 
             return result.Match(
                 onSuccess: product => Ok(ProductDetails.From(product)),
-                onFailure: error => this.ToProblem(error));
+                onFailure: _ => this.ToProblem(result));
         }
 
         [HttpPost]
@@ -37,7 +37,7 @@ namespace CleanArchitecture.WebApi.Controllers
 
             return result.Match(
                 onSuccess: id => CreatedAtAction(nameof(Get), new { id }, new { id }),
-                onFailure: error => this.ToProblem(error));
+                onFailure: _ => this.ToProblem(result));
         }
 
         [HttpPut("{id}/price")]
@@ -47,7 +47,7 @@ namespace CleanArchitecture.WebApi.Controllers
 
             return result.Match(
                 onSuccess: () => NoContent(),
-                onFailure: error => this.ToProblem(error));
+                onFailure: _ => this.ToProblem(result));
         }
     }
 }
