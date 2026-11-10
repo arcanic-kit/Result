@@ -5,66 +5,27 @@ namespace Arcanic.Result;
 /// </summary>
 /// <typeparam name="TValue">The type of the value.</typeparam>
 [DebuggerDisplay("{IsSuccess ? \"Success: \" + Value : \"Failure: \" + Error.Code}")]
-public class Result<TValue>
+public class Result<TValue> : Result
 {
     private readonly TValue? _value;
 
-    /// <summary>
-    /// Initializes a new instance of the <see cref="Result{TValue}"/> class.
-    /// </summary>
-    /// <param name="value">The value.</param>
-    /// <param name="isSuccess">A value indicating whether the result is successful.</param>
-    /// <param name="error">The error.</param>
-    /// <exception cref="ArgumentNullException">Thrown when <paramref name="error"/> is <see langword="null"/>.</exception>
-    internal Result(TValue? value, bool isSuccess, Error error)
+    private Result(TValue? value, bool isSuccess, Error error)
+        : base(isSuccess, error)
     {
-        ArgumentNullException.ThrowIfNull(error);
-
-        // Reference equality: Error is a record, so an error built with empty
-        // code and description would otherwise be indistinguishable from the sentinel.
-        var isNone = ReferenceEquals(error, Error.None);
-
-        if (isSuccess && !isNone)
-        {
-            throw new InvalidOperationException("Invalid result. A successful result cannot have an error.");
-        }
-
-        if (!isSuccess && isNone)
-        {
-            throw new InvalidOperationException("Invalid result. A failed result must have an error.");
-        }
-
         _value = value;
-        IsSuccess = isSuccess;
-        Error = error;
     }
-
-    /// <summary>
-    /// Gets a value indicating whether the result is successful.
-    /// </summary>
-    public bool IsSuccess { get; }
-
-    /// <summary>
-    /// Gets a value indicating whether the result is a failure.
-    /// </summary>
-    public bool IsFailure => !IsSuccess;
-
-    /// <summary>
-    /// Gets the error.
-    /// </summary>
-    public Error Error { get; }
 
     /// <summary>
     /// Gets the value if the result is successful.
     /// </summary>
     /// <exception cref="InvalidOperationException">Thrown when trying to access the value of a failed result.</exception>
-    public virtual TValue Value => IsSuccess
+    public TValue Value => IsSuccess
         ? _value!
         : throw new InvalidOperationException("The value of a failure result can not be accessed.");
 
     internal static Result<TValue> Success(TValue value) => new(value, true, Error.None);
 
-    internal static Result<TValue> Failure(Error error) => new(default, false, error);
+    internal static new Result<TValue> Failure(Error error) => new(default, false, error);
 
     /// <summary>
     /// Matches the result and executes the appropriate function.
@@ -108,15 +69,4 @@ public class Result<TValue>
     /// </summary>
     /// <param name="error">The error.</param>
     public static implicit operator Result<TValue>(Error error) => Failure(error);
-
-    /// <summary>
-    /// Implicitly converts a failed <see cref="Result"/> to a typed failed result,
-    /// allowing <see cref="Result.Failure"/> to be returned from methods that return <see cref="Result{TValue}"/>.
-    /// </summary>
-    /// <param name="result">The failed result to convert.</param>
-    /// <returns>A typed failed result carrying the same error.</returns>
-    public static implicit operator Result<TValue>(Result result) =>
-        result.IsFailure
-            ? Failure(result.Error)
-            : throw new InvalidOperationException("Cannot implicitly convert a successful Result to Result<TValue>. Use Result.Success<TValue>(value) instead.");
 }

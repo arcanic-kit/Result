@@ -1,39 +1,59 @@
-using System.ComponentModel;
-
 namespace Arcanic.Result;
 
 /// <summary>
 /// Represents the result of an operation that can either succeed or fail.
 /// </summary>
+/// <remarks>
+/// This is the base of every result: a <see cref="Result{TValue}"/> is also a <see cref="Result"/>,
+/// so code that only cares about success or failure (logging, pipeline behaviors, aggregation)
+/// can handle typed and untyped results uniformly.
+/// </remarks>
 [DebuggerDisplay("{IsSuccess ? \"Success\" : \"Failure: \" + Error.Code}")]
-public class Result : Result<Result>
+public class Result
 {
     /// <summary>
     /// Initializes a new instance of the <see cref="Result"/> class.
     /// </summary>
     /// <param name="isSuccess">A value indicating whether the result is successful.</param>
-    /// <param name="error">The error.</param>
-    internal Result(bool isSuccess, Error error)
-        : base(default, isSuccess, error)
+    /// <param name="error">The error, or <see cref="Error.None"/> for a successful result.</param>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="error"/> is <see langword="null"/>.</exception>
+    /// <exception cref="InvalidOperationException">Thrown when the success flag and the error disagree.</exception>
+    private protected Result(bool isSuccess, Error error)
     {
+        ArgumentNullException.ThrowIfNull(error);
+
+        // Reference equality: Error is a record, so an error built with empty
+        // code and description would otherwise be indistinguishable from the sentinel.
+        var isNone = ReferenceEquals(error, Error.None);
+
+        if (isSuccess && !isNone)
+        {
+            throw new InvalidOperationException("Invalid result. A successful result cannot have an error.");
+        }
+
+        if (!isSuccess && isNone)
+        {
+            throw new InvalidOperationException("Invalid result. A failed result must have an error.");
+        }
+
+        IsSuccess = isSuccess;
+        Error = error;
     }
 
     /// <summary>
-    /// This property is not supported on a void result. Use <see cref="Result{TValue}"/> for operations that return a value.
+    /// Gets a value indicating whether the result is successful.
     /// </summary>
-    /// <remarks>
-    /// Overrides (rather than hides) the base property so it also throws when accessed
-    /// through a <see cref="Result{TValue}"/> reference.
-    /// </remarks>
-    /// <exception cref="InvalidOperationException">Always thrown.</exception>
-    public override Result Value =>
-        throw new InvalidOperationException(NoValueMessage);
+    public bool IsSuccess { get; }
 
-    private const string NoValueMessage =
-        "Result does not carry a value. Use Result<TValue> for operations that return a value.";
+    /// <summary>
+    /// Gets a value indicating whether the result is a failure.
+    /// </summary>
+    public bool IsFailure => !IsSuccess;
 
-    private const string ValueMatchMessage =
-        "Result does not carry a value; use the Match overload whose onSuccess takes no parameters.";
+    /// <summary>
+    /// Gets the error, or <see cref="Error.None"/> when the result is successful.
+    /// </summary>
+    public Error Error { get; }
 
     /// <summary>
     /// Creates a successful result.
@@ -47,14 +67,22 @@ public class Result : Result<Result>
     /// <typeparam name="TValue">The value type.</typeparam>
     /// <param name="value">The value.</param>
     /// <returns>A successful result with the specified value.</returns>
-    public static Result<TValue> Success<TValue>(TValue value) => new(value, true, Error.None);
+    public static Result<TValue> Success<TValue>(TValue value) => Result<TValue>.Success(value);
 
     /// <summary>
     /// Creates a failed result.
     /// </summary>
     /// <param name="error">The error.</param>
     /// <returns>A failed result with the specified error.</returns>
-    public new static Result Failure(Error error) => new(false, error);
+    public static Result Failure(Error error) => new(false, error);
+
+    /// <summary>
+    /// Creates a failed typed result.
+    /// </summary>
+    /// <typeparam name="TValue">The value type the result would have carried on success.</typeparam>
+    /// <param name="error">The error.</param>
+    /// <returns>A failed result with the specified error.</returns>
+    public static Result<TValue> Failure<TValue>(Error error) => Result<TValue>.Failure(error);
 
     /// <summary>
     /// Matches the result and executes the appropriate function.
@@ -82,26 +110,6 @@ public class Result : Result<Result>
             onFailure(Error);
         }
     }
-
-    /// <summary>
-    /// Not supported: hides the inherited value-based overload, which would otherwise compile
-    /// and pass a meaningless value to <paramref name="onSuccess"/>.
-    /// </summary>
-    /// <exception cref="NotSupportedException">Always thrown.</exception>
-    [Obsolete(ValueMatchMessage, error: true)]
-    [EditorBrowsable(EditorBrowsableState.Never)]
-    public new TOut Match<TOut>(Func<Result, TOut> onSuccess, Func<Error, TOut> onFailure) =>
-        throw new NotSupportedException(ValueMatchMessage);
-
-    /// <summary>
-    /// Not supported: hides the inherited value-based overload, which would otherwise compile
-    /// and pass a meaningless value to <paramref name="onSuccess"/>.
-    /// </summary>
-    /// <exception cref="NotSupportedException">Always thrown.</exception>
-    [Obsolete(ValueMatchMessage, error: true)]
-    [EditorBrowsable(EditorBrowsableState.Never)]
-    public new void Match(Action<Result> onSuccess, Action<Error> onFailure) =>
-        throw new NotSupportedException(ValueMatchMessage);
 
     /// <summary>
     /// Implicitly converts an error to a failed result.

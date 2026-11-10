@@ -17,7 +17,7 @@ dotnet add package Arcanic.Result
 | Type | Description |
 |---|---|
 | `Result` | An operation that either succeeds or fails |
-| `Result<T>` | An operation that either succeeds with a value or fails |
+| `Result<T>` | An operation that either succeeds with a value or fails. Derives from `Result`, so any typed result can be handled as a `Result` |
 | `Error` | A structured error with a code, description, and category |
 | `ErrorType` | `Failure`, `Validation`, `NotFound`, `Conflict`, `Unauthorized`, `Forbidden` |
 
@@ -28,11 +28,11 @@ dotnet add package Arcanic.Result
 Result ok = Result.Success();
 Result<User> user = Result.Success(new User(...));
 
-// Failure — Result.Failure implicitly converts to Result<T>
+// Failure
 Result fail = Result.Failure(Error.Failure("DB.Timeout", "Database timed out"));
-Result<User> notFound = Result.Failure(Error.NotFound("User.NotFound", "User does not exist"));
+Result<User> notFound = Result.Failure<User>(Error.NotFound("User.NotFound", "User does not exist"));
 
-// Implicit conversions — return a value or an error directly
+// Implicit conversions — return a value or an error directly (the idiomatic form)
 Result<int> count = 42;
 Result<User> missing = Error.NotFound("User.NotFound", "User does not exist");
 ```

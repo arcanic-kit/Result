@@ -43,55 +43,48 @@ namespace Arcanic.Result.Tests
         }
 
         [Fact]
-        public void Failure_ShouldImplicitlyConvertToTypedResult()
+        public void TypedFailure_ShouldCreateFailedTypedResult()
         {
             // Arrange
             var error = Error.Failure("Test.Error", "Test error description");
 
             // Act
-            Result<string> result = Result.Failure(error);
+            var result = Result.Failure<string>(error);
 
             // Assert
+            Assert.IsType<Result<string>>(result);
             Assert.False(result.IsSuccess);
             Assert.True(result.IsFailure);
             Assert.Equal(error, result.Error);
         }
 
         [Fact]
-        public void Value_OnSuccessfulVoidResult_ShouldThrowInvalidOperationException()
+        public void TypedFailure_WithNullError_ShouldThrowArgumentNullException()
         {
-            // Arrange
-            var result = Result.Success();
-
-            // Act & Assert
-            Assert.Throws<InvalidOperationException>(() => result.Value);
+            Assert.Throws<ArgumentNullException>(() => Result.Failure<string>(null!));
         }
 
         [Fact]
-        public void Value_OnSuccessfulVoidResult_ThroughBaseReference_ShouldThrowInvalidOperationException()
+        public void TypedResult_ShouldBeUsableAsResult()
         {
             // Arrange
-            Result<Result> result = Result.Success();
+            Result[] results =
+            [
+                Result.Success(),
+                Result.Success(42),
+                Result.Failure<string>(Error.NotFound("Item.NotFound", "Item was not found")),
+            ];
 
             // Act & Assert
-            Assert.Throws<InvalidOperationException>(() => result.Value);
-        }
-
-        [Fact]
-        public void ValueMatch_OnSuccessfulVoidResult_ThroughBaseReference_ShouldThrowInsteadOfPassingNull()
-        {
-            // Arrange
-            Result<Result> result = Result.Success();
-
-            // Act & Assert
-            Assert.Throws<InvalidOperationException>(() => result.Match(value => value, error => null!));
+            Assert.Equal([true, true, false], results.Select(r => r.IsSuccess));
+            Assert.Equal("Item.NotFound", results[2].Error.Code);
         }
 
         [Fact]
         public void Value_OnTypedFailure_ShouldThrowInvalidOperationException()
         {
             // Arrange
-            Result<string> result = Result.Failure(Error.Failure("Test.Error", "Test error description"));
+            var result = Result.Failure<string>(Error.Failure("Test.Error", "Test error description"));
 
             // Act & Assert
             Assert.Throws<InvalidOperationException>(() => result.Value);
@@ -154,16 +147,6 @@ namespace Arcanic.Result.Tests
         }
 
         [Fact]
-        public void ImplicitConversion_FromSuccessfulResult_ToTypedResult_ShouldThrow()
-        {
-            // Arrange
-            var success = Result.Success();
-
-            // Act & Assert
-            Assert.Throws<InvalidOperationException>(() => { Result<string> _ = success; });
-        }
-
-        [Fact]
         public void Failure_WithNullError_ShouldThrowArgumentNullException()
         {
             Assert.Throws<ArgumentNullException>(() => Result.Failure(null!));
@@ -215,7 +198,7 @@ namespace Arcanic.Result.Tests
         public void Match_TypedResult_OnFailure_ShouldExecuteOnFailure()
         {
             // Arrange
-            Result<string> result = Result.Failure(Error.Failure("Test.Error", "Test error description"));
+            var result = Result.Failure<string>(Error.Failure("Test.Error", "Test error description"));
             var executed = false;
 
             // Act
@@ -246,7 +229,7 @@ namespace Arcanic.Result.Tests
         public void Match_TypedResult_OnFailure_ShouldReturnFallbackValue()
         {
             // Arrange
-            Result<string> result = Result.Failure(Error.Failure("Test.Error", "Test error description"));
+            var result = Result.Failure<string>(Error.Failure("Test.Error", "Test error description"));
 
             // Act
             var output = result.Match(
@@ -262,7 +245,7 @@ namespace Arcanic.Result.Tests
         {
             // Arrange
             var error = Error.NotFound("Item.NotFound", "Item was not found");
-            Result<string> result = Result.Failure(error);
+            var result = Result.Failure<string>(error);
             Error? capturedError = null;
 
             // Act
