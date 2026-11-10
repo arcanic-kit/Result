@@ -2,8 +2,12 @@
 
 namespace CleanArchitecture.Infrastructure.Persistence.Repositories;
 
+/// <summary>
+/// In-memory product store. Registered as a singleton, so every access is guarded by <see cref="_lock"/>.
+/// </summary>
 internal class ProductRepository : IProductRepository
 {
+    private readonly Lock _lock = new();
     private readonly List<Product> _products;
     private int _nextId;
 
@@ -46,43 +50,54 @@ internal class ProductRepository : IProductRepository
 
     public Task<Product?> GetByIdAsync(int id)
     {
-        var product = _products.FirstOrDefault(p => p.Id == id);
-        return Task.FromResult(product);
+        lock (_lock)
+        {
+            var product = _products.FirstOrDefault(p => p.Id == id);
+            return Task.FromResult(product);
+        }
     }
 
     public Task<IEnumerable<Product>> GetAllAsync()
     {
-        return Task.FromResult<IEnumerable<Product>>(_products.ToList());
+        lock (_lock)
+        {
+            return Task.FromResult<IEnumerable<Product>>(_products.ToList());
+        }
     }
 
     public Task<Product> AddAsync(Product product)
     {
-        // Create a new product with the next available ID
-        var newProduct = new Product(_nextId++, product.Name, product.Price)
+        lock (_lock)
         {
-            Description = product.Description
-        };
-        _products.Add(newProduct);
-        return Task.FromResult(newProduct);
+            // Create a new product with the next available ID
+            var newProduct = new Product(_nextId++, product.Name, product.Price)
+            {
+                Description = product.Description
+            };
+            _products.Add(newProduct);
+            return Task.FromResult(newProduct);
+        }
     }
 
     public Task UpdateAsync(Product product)
     {
-        var existingIndex = _products.FindIndex(p => p.Id == product.Id);
-        if (existingIndex >= 0)
+        lock (_lock)
         {
-            _products[existingIndex] = product;
+            var existingIndex = _products.FindIndex(p => p.Id == product.Id);
+            if (existingIndex >= 0)
+            {
+                _products[existingIndex] = product;
+            }
+            return Task.CompletedTask;
         }
-        return Task.CompletedTask;
     }
 
     public Task DeleteAsync(int id)
     {
-        var product = _products.FirstOrDefault(p => p.Id == id);
-        if (product != null)
+        lock (_lock)
         {
-            _products.Remove(product);
+            _products.RemoveAll(p => p.Id == id);
+            return Task.CompletedTask;
         }
-        return Task.CompletedTask;
     }
 }
