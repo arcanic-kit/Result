@@ -17,45 +17,35 @@ public class ProductService : IProductService
     {
         var product = await _productRepository.GetByIdAsync(id);
 
-        if (product == null)
+        if (product is null)
         {
-            return Result.Failure(Error.NotFound("Product.NotFound", $"Product with ID {id} was not found."));
+            // Error converts implicitly to a failed Result<ProductDto>
+            return ProductErrors.NotFound(id);
         }
 
-        var productDto = new ProductDto
-        {
-            Id = product.Id,
-            Name = product.Name,
-            Price = product.Price
-        };
-
-        return Result.Success(productDto);
+        // ProductDto converts implicitly to a successful Result<ProductDto>
+        return ToDto(product);
     }
 
     public async Task<Result<IEnumerable<ProductDto>>> GetAllAsync()
     {
         var products = await _productRepository.GetAllAsync();
 
-        var productDtos = products.Select(product => new ProductDto
-        {
-            Id = product.Id,
-            Name = product.Name,
-            Price = product.Price
-        });
-
-        return Result.Success(productDtos);
+        // C# does not apply user-defined conversions from interface types such as
+        // IEnumerable<T>, so this case uses Result.Success explicitly.
+        return Result.Success(products.Select(ToDto));
     }
 
     public async Task<Result<int>> CreateAsync(string name, string? description, decimal price)
     {
         if (string.IsNullOrWhiteSpace(name))
         {
-            return Result.Failure(Error.Validation("Product.Name.Empty", "Product name cannot be empty."));
+            return ProductErrors.NameEmpty;
         }
 
         if (price < 0)
         {
-            return Result.Failure(Error.Validation("Product.Price.Negative", "Product price cannot be negative."));
+            return ProductErrors.PriceNegative;
         }
 
         var product = new Domain.Products.Product(0, name, price)
@@ -64,23 +54,21 @@ public class ProductService : IProductService
         };
 
         var createdProduct = await _productRepository.AddAsync(product);
-        return Result.Success(createdProduct.Id);
+        return createdProduct.Id;
     }
 
     public async Task<Result> UpdatePriceAsync(int id, decimal price)
     {
         if (price < 0)
         {
-            return Result.Failure(
-                Error.Validation("Product.Price.Negative", "Product price cannot be negative."));
+            return ProductErrors.PriceNegative;
         }
 
         var product = await _productRepository.GetByIdAsync(id);
 
-        if (product == null)
+        if (product is null)
         {
-            return Result.Failure(
-                Error.NotFound("Product.NotFound", $"Product with ID {id} was not found."));
+            return ProductErrors.NotFound(id);
         }
 
         product.UpdatePrice(price);
@@ -88,4 +76,11 @@ public class ProductService : IProductService
 
         return Result.Success();
     }
+
+    private static ProductDto ToDto(Domain.Products.Product product) => new()
+    {
+        Id = product.Id,
+        Name = product.Name,
+        Price = product.Price
+    };
 }

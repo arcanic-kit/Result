@@ -53,8 +53,8 @@ Dot notation for domain-scoped codes: `"Product.NotFound"`, `"User.EmailConflict
 ### Clean Architecture sample (`samples/CleanArchitecture/`)
 
 Demonstrates the intended usage pattern:
-- **Application layer**: services return `Result<T>` — no exceptions thrown for business failures
-- **Web API layer**: controllers switch on `error.Type` to map `ErrorType` → HTTP status codes
+- **Application layer**: services return `Result<T>` — no exceptions thrown for business failures. Errors are defined once per feature in a static class (`ProductErrors`) and returned via implicit conversion
+- **Web API layer**: controllers call `result.Match(...)`; failures go through `this.ToProblem(error)` (`WebApi/Extensions/ErrorHttpExtensions.cs`), the single place that maps `ErrorType` → HTTP status and emits problem details with the error `code`
 
 ### Multi-targeting
 

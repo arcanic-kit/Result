@@ -1,7 +1,7 @@
 using CleanArchitecture.Application.Product;
-using Microsoft.AspNetCore.Mvc;
-using Arcanic.Result;
+using CleanArchitecture.WebApi.Extensions;
 using CleanArchitecture.WebApi.Models.Product;
+using Microsoft.AspNetCore.Mvc;
 
 namespace CleanArchitecture.WebApi.Controllers
 {
@@ -15,64 +15,29 @@ namespace CleanArchitecture.WebApi.Controllers
         {
             var result = await productService.GetAllAsync();
 
-            if (result.IsSuccess)
-            {
-                var productsList = result.Value.Select(product => new ProductDetails
-                {
-                    Id = product.Id,
-                    Name = product.Name,
-                    Price = product.Price
-                }).ToList();
-
-                return Ok(productsList);
-            }
-
-            return result.Error.Type switch
-            {
-                ErrorType.Validation => BadRequest(result.Error),
-                _ => Problem(result.Error.Description)
-            };
+            return result.Match(
+                onSuccess: products => Ok(products.Select(ProductDetails.From).ToList()),
+                onFailure: error => this.ToProblem(error));
         }
 
-        [HttpGet("{Id}")]
-        public async Task<IActionResult> Get(int Id)
+        [HttpGet("{id}")]
+        public async Task<IActionResult> Get(int id)
         {
-            var result = await productService.GetByIdAsync(Id);
+            var result = await productService.GetByIdAsync(id);
 
-            if (result.IsSuccess)
-            {
-                var productDetails = new ProductDetails
-                {
-                    Id = result.Value.Id,
-                    Name = result.Value.Name,
-                    Price = result.Value.Price
-                };
-                return Ok(productDetails);
-            }
-
-            return result.Error.Type switch
-            {
-                ErrorType.NotFound => NotFound(result.Error),
-                ErrorType.Validation => BadRequest(result.Error),
-                _ => Problem(result.Error.Description)
-            };
+            return result.Match(
+                onSuccess: product => Ok(ProductDetails.From(product)),
+                onFailure: error => this.ToProblem(error));
         }
 
-        [HttpPost()]
+        [HttpPost]
         public async Task<IActionResult> Add([FromBody] CreateProduct request)
         {
             var result = await productService.CreateAsync(request.Name, request.Description, request.Price);
 
-            if (result.IsSuccess)
-            {
-                return CreatedAtAction(nameof(Get), new { Id = result.Value }, new { Id = result.Value });
-            }
-
-            return result.Error.Type switch
-            {
-                ErrorType.Validation => BadRequest(result.Error),
-                _ => Problem(result.Error.Description)
-            };
+            return result.Match(
+                onSuccess: id => CreatedAtAction(nameof(Get), new { id }, new { id }),
+                onFailure: error => this.ToProblem(error));
         }
 
         [HttpPut("{id}/price")]
@@ -80,17 +45,9 @@ namespace CleanArchitecture.WebApi.Controllers
         {
             var result = await productService.UpdatePriceAsync(id, request.Price);
 
-            if (result.IsSuccess)
-            {
-                return NoContent();
-            }
-
-            return result.Error.Type switch
-            {
-                ErrorType.NotFound => NotFound(result.Error),
-                ErrorType.Validation => BadRequest(result.Error),
-                _ => Problem(result.Error.Description)
-            };
+            return result.Match(
+                onSuccess: () => NoContent(),
+                onFailure: error => this.ToProblem(error));
         }
     }
 }
