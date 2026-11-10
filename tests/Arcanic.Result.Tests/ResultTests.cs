@@ -92,6 +92,48 @@ namespace Arcanic.Result.Tests
         }
 
         [Fact]
+        public void ImplicitConversion_FromValue_ShouldCreateSuccessfulTypedResult()
+        {
+            // Act
+            Result<string> result = "hello";
+
+            // Assert
+            Assert.True(result.IsSuccess);
+            Assert.Equal("hello", result.Value);
+            Assert.Same(Error.None, result.Error);
+        }
+
+        [Fact]
+        public void ImplicitConversion_FromError_ShouldCreateFailedTypedResult()
+        {
+            // Arrange
+            var error = Error.NotFound("Item.NotFound", "Item was not found");
+
+            // Act
+            Result<string> result = error;
+
+            // Assert
+            Assert.True(result.IsFailure);
+            Assert.Equal(error, result.Error);
+        }
+
+        [Fact]
+        public void ImplicitConversion_FromNullError_ToTypedResult_ShouldThrowArgumentNullException()
+        {
+            Assert.Throws<ArgumentNullException>(() => { Result<string> _ = (Error)null!; });
+        }
+
+        [Fact]
+        public void ImplicitConversion_ShouldWorkAsReturnValue()
+        {
+            static Result<int> Parse(string input) =>
+                int.TryParse(input, out var n) ? n : Error.Validation("INVALID_NUMBER", "Not a number");
+
+            Assert.Equal(42, Parse("42").Value);
+            Assert.Equal("INVALID_NUMBER", Parse("x").Error.Code);
+        }
+
+        [Fact]
         public void ImplicitConversion_FromSuccessfulResult_ToTypedResult_ShouldThrow()
         {
             // Arrange

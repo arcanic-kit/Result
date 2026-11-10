@@ -35,9 +35,9 @@ This directory contains GitHub Actions workflows for the Arcanic.Result project.
 ### 1. Configure NuGet API Key
 
 1. Go to [NuGet.org](https://www.nuget.org/) and sign in
-2. Go to your account settings ? API Keys
+2. Go to your account settings → API Keys
 3. Create a new API key with "Push" permissions for your packages
-4. In your GitHub repository, go to Settings ? Secrets and Variables ? Actions
+4. In your GitHub repository, go to Settings → Secrets and Variables → Actions
 5. Add a new repository secret named `NUGET_API_KEY` with your API key value
 
 Note: The workflow also publishes to GitHub Packages using the `GITHUB_TOKEN` (automatically available).
@@ -53,7 +53,7 @@ git push origin v1.0.0
 
 #### Option B: Manual Release
 1. Go to your repository on GitHub
-2. Navigate to Actions ? Release
+2. Navigate to Actions → Release
 3. Click "Run workflow"
 4. Enter the version number (e.g., `1.0.0`)
 5. Click "Run workflow"

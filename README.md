@@ -31,7 +31,14 @@ Result<User> user = Result.Success(new User(...));
 // Failure — Result.Failure implicitly converts to Result<T>
 Result fail = Result.Failure(Error.Failure("DB.Timeout", "Database timed out"));
 Result<User> notFound = Result.Failure(Error.NotFound("User.NotFound", "User does not exist"));
+
+// Implicit conversions — return a value or an error directly
+Result<int> count = 42;
+Result<User> missing = Error.NotFound("User.NotFound", "User does not exist");
 ```
+
+> C# does not apply user-defined conversions from interface types, so for results like
+> `Result<IEnumerable<User>>` use `Result.Success(users)` instead of the implicit conversion.
 
 ### Error types
 

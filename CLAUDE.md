@@ -30,17 +30,21 @@ This is a **Railway-Oriented Programming** library for .NET 8/9/10 that provides
 
 ### Core abstractions (`src/Arcanic.Result/`)
 
-- **`ErrorType`** — enum classifying errors: `Failure`, `Validation`, `Conflict`, `NotFound`
-- **`Error`** — sealed record with `Code`, `Description`, and `ErrorType`. Built via static factories: `Error.Failure()`, `Error.Validation()`, `Error.NotFound()`, `Error.Conflict()`. Special constants: `Error.None`, `Error.NullValue`
-- **`Result`** — base class with `IsSuccess`/`IsFailure`/`Error`. Created via `Result.Success()` / `Result.Failure(error)`. Supports `Match<TOut>()` for pattern matching
-- **`Result<TValue>`** — generic subclass adding a `Value` property (throws if accessed on failure). Supports implicit conversions from both `TValue` and `Error`
+- **`ErrorType`** — enum classifying errors: `Failure`, `Validation`, `Conflict`, `NotFound`, `Unauthorized`, `Forbidden`
+- **`Error`** — sealed record with `Code`, `Description`, and `Type`. Built via static factories: `Error.Failure()`, `Error.Validation()`, `Error.NotFound()`, `Error.Conflict()`, `Error.Unauthorized()`, `Error.Forbidden()`. `Error.None` is the sentinel carried by successful results; the result constructor compares against it **by reference**, and rejects `null` errors
+- **`Result<TValue>`** — base class with `IsSuccess`/`IsFailure`/`Error`/`Value` (`Value` throws if accessed on failure). Supports `Match` for pattern matching
+- **`Result`** — derives from `Result<Result>` (Ardalis.Result-style) for operations without a value; its `Value` always throws. Created via `Result.Success()`, `Result.Success<T>(value)`, `Result.Failure(error)`
 
 ### Implicit conversion convention
 
 ```csharp
-Result<string> r1 = "hello";        // success
+Result<string> r1 = "hello";                                    // success
 Result<string> r2 = Error.NotFound("X.NotFound", "Not found");  // failure
+Result         r3 = Error.Failure("X.Failed", "Failed");        // failure
+Result<string> r4 = Result.Failure(error);                      // failed Result → Result<T> (throws if successful)
 ```
+
+C# ignores user-defined conversions from interface types, so for `Result<IEnumerable<T>>` etc. use `Result.Success(value)`.
 
 ### Error code naming convention
 
@@ -54,4 +58,4 @@ Demonstrates the intended usage pattern:
 
 ### Multi-targeting
 
-The library targets .NET 8, 9, and 10 simultaneously (configured in `Directory.Build.props`). CI tests all three. Nullable reference types and implicit usings are enabled project-wide.
+The library targets .NET 8, 9, and 10 simultaneously (configured in `src/Directory.Build.props`, which applies only to `src/`). The test project multi-targets the same three frameworks, so CI tests all three; samples target .NET 10 only. The SDK is pinned via `global.json`. Nullable reference types and implicit usings are enabled in every project.

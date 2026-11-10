@@ -94,6 +94,22 @@ public class Result<TValue>
     }
 
     /// <summary>
+    /// Implicitly converts a value to a successful result.
+    /// </summary>
+    /// <remarks>
+    /// C# does not apply user-defined conversions from interface types, so when <typeparamref name="TValue"/>
+    /// is an interface (e.g. <c>IEnumerable&lt;T&gt;</c>) use <see cref="Result.Success{TValue}(TValue)"/> instead.
+    /// </remarks>
+    /// <param name="value">The value.</param>
+    public static implicit operator Result<TValue>(TValue value) => Success(value);
+
+    /// <summary>
+    /// Implicitly converts an error to a typed failed result.
+    /// </summary>
+    /// <param name="error">The error.</param>
+    public static implicit operator Result<TValue>(Error error) => Failure(error);
+
+    /// <summary>
     /// Implicitly converts a failed <see cref="Result"/> to a typed failed result,
     /// allowing <see cref="Result.Failure"/> to be returned from methods that return <see cref="Result{TValue}"/>.
     /// </summary>
