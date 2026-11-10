@@ -61,7 +61,7 @@ namespace Arcanic.Result.Tests
         [Fact]
         public void TypedFailure_WithNullError_ShouldThrowArgumentNullException()
         {
-            Assert.Throws<ArgumentNullException>(() => Result.Failure<string>(null!));
+            Assert.Throws<ArgumentNullException>(() => Result.Failure<string>((Error)null!));
         }
 
         [Fact]
@@ -149,7 +149,7 @@ namespace Arcanic.Result.Tests
         [Fact]
         public void Failure_WithNullError_ShouldThrowArgumentNullException()
         {
-            Assert.Throws<ArgumentNullException>(() => Result.Failure(null!));
+            Assert.Throws<ArgumentNullException>(() => Result.Failure((Error)null!));
         }
 
         [Fact]

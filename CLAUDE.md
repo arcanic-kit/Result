@@ -34,6 +34,7 @@ This is a **Railway-Oriented Programming** library for .NET 8/9/10 that provides
 - **`Error`** — sealed record with `Code`, `Description`, and `Type`. Built via static factories: `Error.Failure()`, `Error.Validation()`, `Error.NotFound()`, `Error.Conflict()`, `Error.Unauthorized()`, `Error.Forbidden()`. `Error.None` is the sentinel carried by successful results; the result constructor compares against it **by reference**, and rejects `null` errors
 - **`Result`** — base class with `IsSuccess`/`IsFailure`/`Error`; the validating constructor is `private protected`, so `Result<TValue>` is the only subclass. Created via `Result.Success()`, `Result.Success<T>(value)`, `Result.Failure(error)`, `Result.Failure<T>(error)`. Supports `Match` for pattern matching
 - **`Result<TValue>`** — derives from `Result`, adding `Value` (throws if accessed on failure)
+- **Multiple errors** — a failure carries one or more errors: `Errors` lists all of them (empty on success), `Error` is the first (`Error.None` on success). Create with `Result.Failure(IEnumerable<Error>)` / `Result.Failure<T>(IEnumerable<Error>)`; `Result.Combine(...)` merges results, collecting every error. `Match`'s `onFailure` receives the first error
 
 ### Implicit conversion convention
 

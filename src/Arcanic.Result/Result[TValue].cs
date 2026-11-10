@@ -15,6 +15,11 @@ public class Result<TValue> : Result
         _value = value;
     }
 
+    private Result(IEnumerable<Error> errors)
+        : base(errors)
+    {
+    }
+
     /// <summary>
     /// Gets the value if the result is successful.
     /// </summary>
@@ -26,6 +31,8 @@ public class Result<TValue> : Result
     internal static Result<TValue> Success(TValue value) => new(value, true, Error.None);
 
     internal static new Result<TValue> Failure(Error error) => new(default, false, error);
+
+    internal static new Result<TValue> Failure(IEnumerable<Error> errors) => new(errors);
 
     /// <summary>
     /// Matches the result and executes the appropriate function.
