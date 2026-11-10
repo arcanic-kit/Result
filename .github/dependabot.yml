@@ -13,7 +13,6 @@ updates:
       test:
         patterns:
           - "coverlet.*"
-          - "Microsoft.NET.Test.Sdk"
           - "xunit*"
       microsoft-extensions:
         patterns:

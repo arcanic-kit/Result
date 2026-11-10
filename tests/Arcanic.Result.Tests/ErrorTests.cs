@@ -32,7 +32,7 @@ namespace Arcanic.Result.Tests
         [Fact]
         public void Factories_ShouldCoverEveryErrorType()
         {
-            var covered = Factories.Select(row => (ErrorType)row[0]).ToHashSet();
+            var covered = Factories.Select(row => row.Data.Item1).ToHashSet();
 
             Assert.Equal(Enum.GetValues<ErrorType>().ToHashSet(), covered);
         }

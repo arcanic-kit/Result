@@ -11,14 +11,17 @@ dotnet restore Arcanic.Result.slnx
 # Build
 dotnet build Arcanic.Result.slnx --configuration Release --no-restore
 
+# Tests use xunit.v3 on Microsoft Testing Platform (opted in via global.json), so
+# dotnet test takes --solution/--project and MTP options, not VSTest ones (--filter, --collect).
+
 # Run all tests
-dotnet test Arcanic.Result.slnx --configuration Release --no-build --verbosity normal
+dotnet test --solution Arcanic.Result.slnx --configuration Release --no-build
 
-# Run tests with coverage
-dotnet test Arcanic.Result.slnx --configuration Release --no-build --collect:"XPlat Code Coverage" --results-directory ./coverage
+# Run tests with coverage (coverlet.MTP, Cobertura output)
+dotnet test --solution Arcanic.Result.slnx --configuration Release --no-build --results-directory ./coverage --coverlet --coverlet-output-format cobertura
 
-# Run a single test class
-dotnet test tests/Arcanic.Result.Tests --filter "FullyQualifiedName~ErrorTests"
+# Run a single test class (xunit filters: --filter-class, --filter-method, --filter-trait)
+dotnet test --project tests/Arcanic.Result.Tests --filter-class "Arcanic.Result.Tests.ErrorTests"
 
 # Pack NuGet package
 dotnet pack Arcanic.Result.slnx --configuration Release --no-build --output ./packages
