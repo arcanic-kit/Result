@@ -15,14 +15,21 @@ public class Result<TValue>
     /// <param name="value">The value.</param>
     /// <param name="isSuccess">A value indicating whether the result is successful.</param>
     /// <param name="error">The error.</param>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="error"/> is <see langword="null"/>.</exception>
     internal Result(TValue? value, bool isSuccess, Error error)
     {
-        if (isSuccess && error != Error.None)
+        ArgumentNullException.ThrowIfNull(error);
+
+        // Reference equality: Error is a record, so an error built with empty
+        // code and description would otherwise be indistinguishable from the sentinel.
+        var isNone = ReferenceEquals(error, Error.None);
+
+        if (isSuccess && !isNone)
         {
             throw new InvalidOperationException("Invalid result. A successful result cannot have an error.");
         }
 
-        if (!isSuccess && error == Error.None)
+        if (!isSuccess && isNone)
         {
             throw new InvalidOperationException("Invalid result. A failed result must have an error.");
         }

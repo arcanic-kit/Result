@@ -102,6 +102,38 @@ namespace Arcanic.Result.Tests
         }
 
         [Fact]
+        public void Failure_WithNullError_ShouldThrowArgumentNullException()
+        {
+            Assert.Throws<ArgumentNullException>(() => Result.Failure(null!));
+        }
+
+        [Fact]
+        public void ImplicitConversion_FromNullError_ShouldThrowArgumentNullException()
+        {
+            Assert.Throws<ArgumentNullException>(() => { Result _ = (Error)null!; });
+        }
+
+        [Fact]
+        public void Failure_WithNone_ShouldThrowInvalidOperationException()
+        {
+            Assert.Throws<InvalidOperationException>(() => Result.Failure(Error.None));
+        }
+
+        [Fact]
+        public void Failure_WithEmptyErrorThatEqualsNone_ShouldCreateFailedResult()
+        {
+            // Arrange — value-equal to Error.None, but a distinct instance
+            var error = Error.Failure(string.Empty, string.Empty);
+
+            // Act
+            var result = Result.Failure(error);
+
+            // Assert
+            Assert.True(result.IsFailure);
+            Assert.Same(error, result.Error);
+        }
+
+        [Fact]
         public void Match_TypedResult_OnSuccess_ShouldExecuteOnSuccess()
         {
             // Arrange
