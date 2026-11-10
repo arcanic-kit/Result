@@ -18,17 +18,16 @@ This directory contains GitHub Actions workflows for the Arcanic.Result project.
 ### 2. Release Workflow (`release.yml`)
 
 **Triggers:**
-- Push of version tags (e.g., `v1.0.0`, `v2.1.3`)
+- Push of version tags (e.g., `v10.1.0`, `v10.1.0-beta.1`)
 - Manual workflow dispatch with version input
 
 **What it does:**
-- Builds the solution in Release configuration using multiple .NET versions (8, 9, 10)
-- Runs tests to ensure quality
-- Creates NuGet packages for all source projects (excluding samples, tests, and benchmarks)
-- Publishes packages to both NuGet.org and GitHub Packages
-- Creates symbol packages (.snupkg) for debugging
-- Creates a GitHub release with package information
+- Validates the version is SemVer (prereleases such as `10.1.0-beta.1` are supported) and that the commit is on `main`
+- Builds the solution and runs the tests against .NET 8, 9 and 10
+- Packs the `src/` projects (only those are packable), which also runs package validation against the previous release
 - Uploads packages as GitHub artifacts with 90-day retention
+- Publishes to GitHub Packages, then creates the GitHub release, then publishes to NuGet.org last (a NuGet version can never be replaced)
+- Uses `.github/release-notes/v<version>.md` as the release body when it exists, otherwise generates notes from merged PRs; versions with a prerelease suffix are marked as prereleases
 
 ## Setup Instructions
 
@@ -47,15 +46,15 @@ Note: The workflow also publishes to GitHub Packages using the `GITHUB_TOKEN` (a
 #### Option A: Tag-based Release (Recommended)
 ```bash
 # Create and push a version tag
-git tag v1.0.0
-git push origin v1.0.0
+git tag v10.1.0
+git push origin v10.1.0
 ```
 
 #### Option B: Manual Release
 1. Go to your repository on GitHub
 2. Navigate to Actions → Release
 3. Click "Run workflow"
-4. Enter the version number (e.g., `1.0.0`)
+4. Enter the version number (e.g., `10.1.0`)
 5. Click "Run workflow"
 
 ### 3. Version Management
