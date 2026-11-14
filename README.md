@@ -9,7 +9,7 @@
 [![NuGet](https://img.shields.io/nuget/v/Arcanic.Result?style=for-the-badge&logo=nuget&logoColor=white&label=NuGet&color=004880)](https://www.nuget.org/packages/Arcanic.Result)
 [![Downloads](https://img.shields.io/nuget/dt/Arcanic.Result?style=for-the-badge&logo=nuget&logoColor=white&label=Downloads&color=004880)](https://www.nuget.org/packages/Arcanic.Result)
 [![Build](https://img.shields.io/github/actions/workflow/status/arcanic-kit/Result/build-and-test.yml?style=for-the-badge&logo=githubactions&logoColor=white&label=Build)](https://github.com/arcanic-kit/Result/actions/workflows/build-and-test.yml)
-[![.NET](https://img.shields.io/badge/.NET-8%20%7C%209%20%7C%2010-512BD4?style=for-the-badge&logo=dotnet&logoColor=white)](https://dotnet.microsoft.com)
+[![.NET](https://img.shields.io/badge/.NET-10%20%7C%2011-512BD4?style=for-the-badge&logo=dotnet&logoColor=white)](https://dotnet.microsoft.com)
 [![License](https://img.shields.io/badge/License-MIT-22C55E?style=for-the-badge)](https://github.com/arcanic-kit/Result/blob/main/LICENSE)
 
 </div>
@@ -24,7 +24,7 @@
 - 🔗 **Railway-style chaining** with `Map`, `Bind`, `Ensure`, `Tap`
 - ⚡ **Async pipelines** that read like sync code
 - 🧩 **Multiple errors** for reporting every validation failure at once
-- 🪶 **Zero dependencies**, targets .NET 8, 9 and 10
+- 🪶 **Zero dependencies**, targets .NET 10 and 11
 
 ## 📦 Installation
 
@@ -111,7 +111,7 @@ The [Clean Architecture sample](https://github.com/arcanic-kit/Result/tree/main/
 
 ## 🔢 Versioning
 
-The major version follows .NET (**10.x for .NET 10**), so a minor release can contain breaking changes. Check the [release notes](https://github.com/arcanic-kit/Result/tree/main/.github/release-notes) before upgrading.
+The major version follows .NET (**11.x for .NET 11**), so a minor release can contain breaking changes. Check the [release notes](https://github.com/arcanic-kit/Result/tree/main/.github/release-notes) before upgrading.
 
 > ⚠️ **Upgrading from 10.0 to 10.1?** In methods returning `Result<T>`, replace `Result.Failure(error)` with `return error;` or `Result.Failure<T>(error)`.
 

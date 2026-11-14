@@ -17,15 +17,14 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
 
-    # The SDK is pinned by global.json; the 8.0 and 9.0 runtimes are installed
+    # The SDK is pinned by global.json; the 10.0 runtime is installed
     # so the test project runs against every target framework.
     - name: Setup .NET
       uses: actions/setup-dotnet@v4
       with:
         dotnet-version: |
-          8.0.x
-          9.0.x
           10.0.x
+          11.0.x
 
     - name: Restore dependencies
       run: dotnet restore Arcanic.Result.slnx

@@ -29,7 +29,7 @@ dotnet pack Arcanic.Result.slnx --configuration Release --no-build --output ./pa
 
 ## Architecture
 
-This is a **Railway-Oriented Programming** library for .NET 8/9/10 that provides explicit success/failure result types. It avoids exceptions for business logic control flow.
+This is a **Railway-Oriented Programming** library for .NET 10/11 that provides explicit success/failure result types. It avoids exceptions for business logic control flow.
 
 ### Core abstractions (`src/Arcanic.Result/`)
 
@@ -55,7 +55,7 @@ There is no conversion from `Result` to `Result<T>` (C# forbids user-defined con
 
 ### Breaking changes
 
-The package's major version follows the .NET major version (10.x for .NET 10), not SemVer, so a minor release may contain breaking changes; they must be listed in that version's release notes (`.github/release-notes/v<version>.md`) with migration guidance.
+The package's major version follows the .NET major version (11.x for .NET 11), not SemVer, so a minor release may contain breaking changes; they must be listed in that version's release notes (`.github/release-notes/v<version>.md`) with migration guidance.
 
 `src/Arcanic.Result/CompatibilitySuppressions.xml` lists the breaks accepted for the upcoming release against `PackageValidationBaselineVersion`. Only regenerate it (`dotnet pack -p:ApiCompatGenerateSuppressionFile=true`) for an intentional break, and delete it when the baseline moves to a version that already contains those breaks.
 
@@ -71,7 +71,7 @@ Demonstrates the intended usage pattern:
 
 ### Multi-targeting
 
-The library targets .NET 8, 9, and 10 simultaneously (configured in `src/Directory.Build.props`). The test project multi-targets the same three frameworks, so CI tests all three; samples target .NET 10 only. The SDK is pinned via `global.json`.
+The library targets .NET 10 and 11 simultaneously (configured in `src/Directory.Build.props`). The test project multi-targets the same three frameworks, so CI tests both; samples target .NET 11 only. The SDK is pinned via `global.json`.
 
 ### Build configuration
 

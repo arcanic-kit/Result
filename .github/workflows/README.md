@@ -23,7 +23,7 @@ This directory contains GitHub Actions workflows for the Arcanic.Result project.
 
 **What it does:**
 - Validates the version is SemVer (prereleases such as `10.1.0-beta.1` are supported) and that the commit is on `main`
-- Builds the solution and runs the tests against .NET 8, 9 and 10
+- Builds the solution and runs the tests against .NET 10 and 11
 - Packs the `src/` projects (only those are packable), which also runs package validation against the previous release
 - Uploads packages as GitHub artifacts with 90-day retention
 - Publishes to GitHub Packages, then creates the GitHub release, then publishes to NuGet.org last (a NuGet version can never be replaced)
