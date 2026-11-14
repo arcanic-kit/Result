@@ -24,7 +24,7 @@
 - 🔗 **Railway-style chaining** with `Map`, `Bind`, `Ensure`, `Tap`
 - ⚡ **Async pipelines** that read like sync code
 - 🧩 **Multiple errors** for reporting every validation failure at once
-- 🪶 **Zero dependencies**, targets .NET 8, 9 and 10
+- 🪶 **Zero dependencies**, targets .NET 10 and 11
 
 ## 📦 Installation
 
@@ -111,7 +111,7 @@ The [Clean Architecture sample](https://github.com/arcanic-kit/Result/tree/main/
 
 ## 🔢 Versioning
 
-The major version follows .NET (**10.x for .NET 10**), so a minor release can contain breaking changes. Check the [release notes](https://github.com/arcanic-kit/Result/tree/main/.github/release-notes) before upgrading.
+The major version follows .NET (**11.x for .NET 11**), so a minor release can contain breaking changes. Check the [release notes](https://github.com/arcanic-kit/Result/tree/main/.github/release-notes) before upgrading.
 
 > ⚠️ **Upgrading from 10.0 to 10.1?** In methods returning `Result<T>`, replace `Result.Failure(error)` with `return error;` or `Result.Failure<T>(error)`.
 
