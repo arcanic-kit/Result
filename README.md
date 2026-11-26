@@ -28,7 +28,7 @@ Zero dependencies. Targets .NET 10 and .NET 11.
 
 ## ✅ Return a result
 
-Declare `Result<T>` as the return type, then return `Result.Success(value)` on success or an **error** on failure:
+Declare `Result<T>` as the return type, then return `Result.Success(value)` on success or `Result.Failure<T>(error)` on failure:
 
 ```csharp
 using Arcanic.Result;
@@ -39,21 +39,21 @@ public Result<User> GetUser(int id)
 
     if (user is null)
     {
-        return Error.NotFound("User.NotFound", $"User {id} was not found"); // ❌ failure
+        return Result.Failure<User>(Error.NotFound("User.NotFound", $"User {id} was not found")); // ❌ failure
     }
 
     return Result.Success(user); // ✅ success
 }
 ```
 
-When there is no value to return, use `Result` and `Result.Success()`:
+When there is no value to return, use `Result`, `Result.Success()` and `Result.Failure(error)`:
 
 ```csharp
 public Result Deactivate(User user)
 {
     if (!user.IsActive)
     {
-        return Error.Conflict("User.AlreadyInactive", "The user is already inactive");
+        return Result.Failure(Error.Conflict("User.AlreadyInactive", "The user is already inactive"));
     }
 
     user.IsActive = false;
@@ -63,7 +63,7 @@ public Result Deactivate(User user)
 
 It works the same in async methods: return `Task<Result<T>>` or `Task<Result>`.
 
-> 💡 Shorthand: `return user;` works too, because the value converts to `Result<User>` implicitly. This doesn't work for interface types such as `Result<IEnumerable<T>>`, so use `Result.Success(items)` there.
+> 💡 Shorthand: `return user;` and `return error;` work too, because values and errors convert to `Result<User>` implicitly. The value conversion doesn't work for interface types such as `Result<IEnumerable<T>>`, so use `Result.Success(items)` there.
 
 ## 🎯 Handle the result
 
@@ -102,7 +102,7 @@ Error.Forbidden("Role.Missing",     "You are not allowed to do this");
 Error.Failure("Db.Timeout",         "The database timed out");
 ```
 
-Keep each feature's errors in one static class, and return them directly:
+Keep each feature's errors in one static class, and wrap them in a failure:
 
 ```csharp
 public static class UserErrors
@@ -112,7 +112,7 @@ public static class UserErrors
     public static Error NotFound(int id) => Error.NotFound("User.NotFound", $"User {id} was not found");
 }
 
-return UserErrors.NotFound(id);
+return Result.Failure<User>(UserErrors.NotFound(id));
 ```
 
 ## 🚀 Going further
