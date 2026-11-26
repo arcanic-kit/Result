@@ -16,15 +16,7 @@
 
 ---
 
-## ✨ Features
-
-- ✅ **`Result` and `Result<T>`**: a method either succeeds or fails, and the caller has to handle both
-- 🏷️ **Structured errors** with a code, a description and a type (`NotFound`, `Validation`, ...)
-- 🔀 **Implicit conversions**: `return value;` or `return error;`, no wrapping
-- 🔗 **Railway-style chaining** with `Map`, `Bind`, `Ensure`, `Tap`
-- ⚡ **Async pipelines** that read like sync code
-- 🧩 **Multiple errors** for reporting every validation failure at once
-- 🪶 **Zero dependencies**, targets .NET 10 and 11
+Instead of throwing an exception when something expected goes wrong (a user that doesn't exist, an invalid email…), your method **returns a `Result`**. The caller sees from the signature that it can fail, and has to handle both outcomes.
 
 ## 📦 Installation
 
@@ -32,88 +24,108 @@
 dotnet add package Arcanic.Result
 ```
 
-## 🚀 Quick start
+Zero dependencies. Targets .NET 10 and .NET 11.
+
+## ✅ Return a result
+
+Declare `Result<T>` as the return type, then return `Result.Success(value)` on success or an **error** on failure:
 
 ```csharp
 using Arcanic.Result;
 
-public Result<int> Parse(string input) =>
-    int.TryParse(input, out var number)
-        ? number                                                    // ✅ success
-        : Error.Validation("Number.Invalid", "Not a valid number"); // ❌ failure
+public Result<User> GetUser(int id)
+{
+    var user = _users.Find(id);
 
-string message = Parse("42").Match(
-    onSuccess: number => $"Got {number}",
-    onFailure: error  => $"Oops: {error.Description}");
+    if (user is null)
+    {
+        return Error.NotFound("User.NotFound", $"User {id} was not found"); // ❌ failure
+    }
+
+    return Result.Success(user); // ✅ success
+}
+```
+
+When there is no value to return, use `Result` and `Result.Success()`:
+
+```csharp
+public Result Deactivate(User user)
+{
+    if (!user.IsActive)
+    {
+        return Error.Conflict("User.AlreadyInactive", "The user is already inactive");
+    }
+
+    user.IsActive = false;
+    return Result.Success();
+}
+```
+
+It works the same in async methods: return `Task<Result<T>>` or `Task<Result>`.
+
+> 💡 Shorthand: `return user;` works too, because the value converts to `Result<User>` implicitly. This doesn't work for interface types such as `Result<IEnumerable<T>>`, so use `Result.Success(items)` there.
+
+## 🎯 Handle the result
+
+`Match` makes you handle both outcomes:
+
+```csharp
+string message = GetUser(42).Match(
+    onSuccess: user  => $"Hello, {user.Name}!",
+    onFailure: error => error.Description);
+```
+
+Or check it yourself:
+
+```csharp
+Result<User> result = GetUser(42);
+
+if (result.IsFailure)
+{
+    Console.WriteLine($"{result.Error.Code}: {result.Error.Description}");
+    return;
+}
+
+User user = result.Value;
 ```
 
 ## 🏷️ Errors
 
+An error has a **code**, a **description** and a **type**. Pick the type that describes the failure:
+
 ```csharp
-Error.Failure("Db.Timeout",         "The database timed out");
 Error.Validation("Email.Empty",     "Email is required");
 Error.NotFound("User.NotFound",     "User does not exist");
 Error.Conflict("Email.Taken",       "This email is already used");
 Error.Unauthorized("Auth.Required", "Authentication is required");
 Error.Forbidden("Role.Missing",     "You are not allowed to do this");
+Error.Failure("Db.Timeout",         "The database timed out");
 ```
 
-> 💡 Use dot notation for domain error codes (`Product.NotFound`) and keep each feature's errors in one static class.
-
-## 🔗 Chaining
-
-Each step runs only on success. On failure the steps are skipped, and the failure is passed along with all of its errors.
+Keep each feature's errors in one static class, and return them directly:
 
 ```csharp
-Result<string> greeting = ParseId(input)              // Result<int>
-    .Bind(users.Find)                                 // Result<User>
-    .Ensure(user => user.IsActive, UserErrors.Inactive)
-    .Tap(user => logger.LogInformation("Found {Id}", user.Id))
-    .Map(user => $"Hello, {user.Name}!");
-```
-
-| Method | What it does |
-|---|---|
-| `Map` | 🔄 transforms the value |
-| `Bind` | 🔗 chains an operation that can fail |
-| `Ensure` | 🛡️ fails when a condition is not met |
-| `Tap` / `TapError` | 👀 runs a side effect on success / on failure |
-| `Match` | 🎯 handles both outcomes and returns a value |
-
-## ⚡ Async
-
-The same names work on a `Task<Result<T>>`, and the `...Async` versions take async functions.
-
-```csharp
-string message = await users.FindAsync(id)            // Task<Result<User>>
-    .Ensure(user => user.IsActive, UserErrors.Inactive)
-    .BindAsync(user => mailer.SendWelcomeAsync(user))  // Task<Result>
-    .Match(() => "Welcome email sent 📧", error => error.Description);
-```
-
-## 🧩 Multiple errors
-
-```csharp
-Result validation = Result.Combine(ValidateName(name), ValidatePrice(price));
-
-if (validation.IsFailure)
+public static class UserErrors
 {
-    foreach (var error in validation.Errors)
-        Console.WriteLine($"{error.Code}: {error.Description}");
+    public static readonly Error Inactive = Error.Conflict("User.Inactive", "The user is inactive");
+
+    public static Error NotFound(int id) => Error.NotFound("User.NotFound", $"User {id} was not found");
 }
+
+return UserErrors.NotFound(id);
 ```
 
-`Errors` lists every error of a failure. `Error` is the first one.
+## 🚀 Going further
 
-## 🏗️ Sample
+- 🔗 **Chaining**: `Map`, `Bind`, `Ensure`, `Tap` and `TapError` run the next step only on success.
+- ⚡ **Async pipelines**: the same methods work on `Task<Result<T>>`, plus `MapAsync`, `BindAsync`, `EnsureAsync`, `TapAsync`.
+- 🧩 **Multiple errors**: `Result.Combine(...)` reports every validation failure at once in `Errors`.
 
-The [Clean Architecture sample](https://github.com/arcanic-kit/Result/tree/main/samples/CleanArchitecture) is a complete Web API. Services return `Result<T>`, and every error becomes an RFC 9457 problem details response.
+The [Clean Architecture sample](https://github.com/arcanic-kit/Result/tree/main/samples/CleanArchitecture) shows all of this in a complete Web API, where every error becomes an RFC 9457 problem details response.
 
 ## 🔢 Versioning
 
-The major version follows .NET (**11.x for .NET 11**), so a minor release can contain breaking changes. Check the [release notes](https://github.com/arcanic-kit/Result/tree/main/.github/release-notes) before upgrading.
-
-> ⚠️ **Upgrading from 10.0 to 10.1?** In methods returning `Result<T>`, replace `Result.Failure(error)` with `return error;` or `Result.Failure<T>(error)`.
+The major version follows .NET (**11.x for .NET 11**), so a minor release can contain breaking changes. Check the [release notes](https://github.com/arcanic-kit/Result/tree/main/.github/release-notes) before upgrading. Still on .NET 8 or 9? Use **10.1.0**.
 
 ## 📄 License
 
